@@ -390,3 +390,136 @@ class OrderItem(Base):
 
     def __repr__(self) -> str:
         return f"<OrderItem(id={self.id}, shop_id={self.shop_id}, product='{self.product_name}', qty={self.quantity})>"
+
+
+# ──────────────────────────────────────────────
+# Pydantic-модели для валидации входящих вебхуков и заказов
+# ──────────────────────────────────────────────
+
+from typing import Optional, List, Any
+from pydantic import BaseModel, Field, field_validator, model_validator, ConfigDict
+
+
+class OrderItemValidation(BaseModel):
+    """
+    Строгая Pydantic-модель для валидации отдельной позиции заказа.
+
+    Валидация:
+      - quantity: ОБЯЗАТЕЛЬНО целое число строго больше 0 (int, gt=0).
+      - product_id: целое число > 0 (если передано).
+      - product_name: непустая строка (если передано).
+    """
+    model_config = ConfigDict(populate_by_name=True)
+
+    product_id: Optional[int] = Field(default=None, gt=0, description="ID товара в БД")
+    product_name: Optional[str] = Field(default=None, min_length=1, max_length=255, description="Название товара")
+    quantity: int = Field(..., gt=0, description="Количество товара (целое число строго больше 0)")
+
+    @field_validator("quantity", mode="before")
+    @classmethod
+    def validate_quantity_strictly_positive_int(cls, v: Any) -> int:
+        """Проверяет, что quantity является целым числом больше нуля (gt=0)."""
+        if isinstance(v, bool):
+            raise ValueError("Количество (quantity) должно быть целым числом, а не boolean.")
+        if isinstance(v, float):
+            if not v.is_integer():
+                raise ValueError(f"Количество (quantity) должно быть целым числом, получено дробное: {v}")
+            v = int(v)
+        try:
+            val = int(v)
+        except (ValueError, TypeError):
+            raise ValueError(f"Количество (quantity) должно быть целым числом, получено: {type(v).__name__}")
+
+        if val <= 0:
+            raise ValueError(f"Количество (quantity) должно быть целым числом больше 0, получено: {val}")
+        return val
+
+    @field_validator("product_name")
+    @classmethod
+    def validate_product_name_not_blank(cls, v: Optional[str]) -> Optional[str]:
+        if v is not None:
+            v = v.strip()
+            if not v:
+                raise ValueError("Название товара (product_name) не может быть пустой строкой.")
+        return v
+
+    @model_validator(mode="after")
+    def at_least_one_product_identifier(self) -> "OrderItemValidation":
+        if self.product_id is None and not self.product_name:
+            raise ValueError("Позиция заказа должна содержать product_id или product_name.")
+        return self
+
+
+class WebhookPayloadValidation(BaseModel):
+    """
+    Строгая Pydantic-модель для валидации входящих вебхуков.
+
+    Поддерживает поля и алиасы:
+      - user_id / client_id
+      - message_text / message
+      - phone / phone_number
+      - items (позиции заказа с валидацией quantity > 0)
+    """
+    model_config = ConfigDict(populate_by_name=True)
+
+    user_id: Optional[int] = Field(default=None, gt=0, alias="client_id", description="ID пользователя / клиента")
+    message_text: Optional[str] = Field(default=None, alias="message", description="Текст сообщения")
+    phone: Optional[str] = Field(default=None, alias="phone_number", description="Телефон клиента")
+    client_name: Optional[str] = Field(default=None, max_length=255, description="Имя клиента")
+    items: Optional[List[OrderItemValidation]] = Field(default=None, description="Список товаров")
+    channel: Optional[str] = Field(default=None, max_length=30, description="Канал связи")
+    image_url: Optional[str] = Field(default=None, max_length=2048, description="URL изображения")
+    audio_path: Optional[str] = Field(default=None, max_length=2048, description="Путь к аудио")
+
+    @field_validator("phone")
+    @classmethod
+    def validate_phone_format(cls, v: Optional[str]) -> Optional[str]:
+        if v is not None:
+            cleaned = v.strip()
+            if not cleaned:
+                raise ValueError("Номер телефона (phone) не может быть пустой строкой.")
+            return cleaned
+        return v
+
+    @model_validator(mode="after")
+    def check_at_least_one_content(self) -> "WebhookPayloadValidation":
+        if not self.message_text and not self.image_url and not self.audio_path and not self.items:
+            raise ValueError(
+                "Запрос должен содержать хотя бы одно из полей: "
+                "message_text/message, items, image_url или audio_path."
+            )
+        return self
+
+
+class OrderDataValidation(BaseModel):
+    """
+    Строгая Pydantic-модель для валидации данных заказа.
+
+    Поддерживает поля и алиасы:
+      - user_id / client_id
+      - message_text / message
+      - phone / phone_number
+      - items (список позиций с обязательной валидацией quantity > 0)
+    """
+    model_config = ConfigDict(populate_by_name=True)
+
+    user_id: Optional[int] = Field(default=None, gt=0, alias="client_id", description="ID пользователя / клиента")
+    phone: str = Field(..., min_length=5, max_length=30, alias="phone_number", description="Телефон клиента")
+    message_text: Optional[str] = Field(default=None, alias="message", description="Текст примечания или сообщения")
+    client_name: Optional[str] = Field(default=None, max_length=255, description="Имя клиента")
+    items: List[OrderItemValidation] = Field(..., min_length=1, description="Список позиций заказа")
+
+    @field_validator("phone")
+    @classmethod
+    def validate_phone_not_empty(cls, v: str) -> str:
+        cleaned = v.strip()
+        if not cleaned:
+            raise ValueError("Номер телефона (phone) не может быть пустым.")
+        return cleaned
+
+    @field_validator("items")
+    @classmethod
+    def validate_items_non_empty(cls, v: List[OrderItemValidation]) -> List[OrderItemValidation]:
+        if not v:
+            raise ValueError("Список позиций заказа (items) не может быть пустым.")
+        return v

@@ -16,17 +16,27 @@ from contextlib import asynccontextmanager
 from datetime import datetime, date, timezone
 from typing import Optional
 
+from json import JSONDecodeError
 from fastapi import FastAPI, Depends, HTTPException, Request, status
+from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
+from pydantic import BaseModel, Field, model_validator
 from sqlalchemy.orm import Session
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 
 from config import settings
 from database import engine, Base, get_db, init_db
-from models import Business, Product, Client, ChatMessage
+from models import (
+    Business,
+    Product,
+    Client,
+    ChatMessage,
+    WebhookPayloadValidation,
+    OrderDataValidation,
+    OrderItemValidation,
+)
 from rate_limiter import limiter
 from ai_service import (
     get_ai_response,
@@ -39,6 +49,7 @@ from orders import create_order, OrderCreateRequest, OrderResult
 from webhook_router import router as webhook_router
 from admin_router import router as admin_router
 from omnichannel import router as omni_router
+from messengers_router import router as messengers_router, register_telegram_webhook
 from analytics import get_daily_analytics, format_daily_report, send_daily_report_to_admin
 from openai_service import openai_client
 
@@ -79,12 +90,29 @@ logger = logging.getLogger("sanaq_ai")
 # ──────────────────────────────────────────────
 
 class ChatRequest(BaseModel):
-    """Входящее сообщение от клиента."""
-    business_id: int
-    client_id: int
-    message: Optional[str] = None
-    image_url: Optional[str] = None
-    audio_path: Optional[str] = None
+    """
+    Строгая схема входящего сообщения от клиента (/chat).
+
+    Валидация:
+      - business_id: целое число > 0.
+      - client_id: целое число > 0.
+      - Хотя бы одно из полей message / image_url / audio_path обязательно.
+    """
+    business_id: int = Field(..., ge=1, description="ID бизнеса (целое > 0)")
+    client_id: int = Field(..., ge=1, description="ID клиента (целое > 0)")
+    message: Optional[str] = Field(default=None, max_length=10000, description="Текст сообщения")
+    image_url: Optional[str] = Field(default=None, max_length=2048, description="URL изображения")
+    audio_path: Optional[str] = Field(default=None, max_length=2048, description="Путь к аудиофайлу")
+
+    @model_validator(mode="after")
+    def at_least_one_content_field(self) -> "ChatRequest":
+        """Хотя бы одно поле контента обязательно."""
+        if not self.message and not self.image_url and not self.audio_path:
+            raise ValueError(
+                "Запрос должен содержать хотя бы одно: "
+                "message, image_url или audio_path."
+            )
+        return self
 
 
 class ChatResponse(BaseModel):
@@ -114,7 +142,14 @@ async def lifespan(app: FastAPI):
     else:
         logger.warning("⚠️ OpenAI API-ключ НЕ настроен — ИИ-ответы будут недоступны!")
 
+    # Автоматическая регистрация Telegram setWebhook при старте приложения
+    try:
+        await register_telegram_webhook()
+    except Exception as tg_err:
+        logger.error("Ошибка при авто-регистрации Telegram setWebhook: %s", tg_err)
+
     yield
+
 
     # Shutdown
     await openai_client.close()
@@ -142,7 +177,60 @@ app = FastAPI(
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
-# Модуль 2: Безопасная обработка ошибок (Глобальный перехватчик исклиний)
+
+# ──────────────────────────────────────────────
+# Автоматические обработчики 422 (Битый JSON и ошибки Pydantic)
+# ──────────────────────────────────────────────
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    """
+    Автоматический перехват ошибок валидации Pydantic и возврат статуса 422 Unprocessable Entity.
+    """
+    logger.warning(
+        "Ошибка валидации входящего JSON [HTTP 422] (%s %s): %s",
+        request.method, request.url.path, exc,
+    )
+    raw_errors = exc.errors()
+    safe_errors = []
+    for err in raw_errors:
+        err_copy = dict(err)
+        if "ctx" in err_copy and isinstance(err_copy["ctx"], dict):
+            err_copy["ctx"] = {
+                k: str(v) if isinstance(v, Exception) else v
+                for k, v in err_copy["ctx"].items()
+            }
+        safe_errors.append(err_copy)
+
+    return JSONResponse(
+        status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+        content={
+            "status": "error",
+            "detail": "Некорректный формат данных или невалидный JSON (Validation Error).",
+            "errors": safe_errors,
+        },
+    )
+
+
+@app.exception_handler(JSONDecodeError)
+async def json_decode_exception_handler(request: Request, exc: JSONDecodeError):
+    """
+    Автоматический перехват синтаксически битого JSON в теле запроса и возврат 422 Unprocessable Entity.
+    """
+    logger.warning(
+        "Битый JSON в теле запроса [HTTP 422] (%s %s): %s",
+        request.method, request.url.path, exc,
+    )
+    return JSONResponse(
+        status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+        content={
+            "status": "error",
+            "detail": "Битый или некорректный JSON в теле запроса (JSONDecodeError).",
+        },
+    )
+
+
+# Модуль 2: Безопасная обработка ошибок (Глобальный перехватчик исключений)
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
     """
@@ -174,7 +262,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Подключаем роутеры
+# Подключаем роутеры (конкретные пути messengers_router должны быть раньше параметризованного webhook_router)
+app.include_router(messengers_router)
 app.include_router(webhook_router)
 app.include_router(admin_router)
 app.include_router(omni_router)

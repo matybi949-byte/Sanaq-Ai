@@ -30,7 +30,7 @@ from datetime import datetime, timezone
 from typing import Optional, List, Dict, Any
 
 from fastapi import APIRouter, Depends, HTTPException, status, Request
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator, model_validator
 from sqlalchemy.orm import Session
 
 from database import get_db
@@ -69,13 +69,89 @@ router = APIRouter(prefix="/webhook", tags=["Webhooks"])
 # ──────────────────────────────────────────────
 
 class WebhookIncomingMessage(BaseModel):
-    """Схема входящего сообщения от вебхука мессенджера (WhatsApp, Telegram, Instagram и др.)."""
-    phone_number: str = Field(..., description="Номер телефона клиента в международном формате")
-    message: Optional[str] = Field(default=None, description="Текст сообщения клиента")
-    client_name: Optional[str] = Field(default=None, description="Имя клиента (если передано мессенджером)")
-    image_url: Optional[str] = Field(default=None, description="URL изображения/скриншота (Instagram Stories и др.)")
-    audio_path: Optional[str] = Field(default=None, description="Путь к аудиофайлу голосового сообщения")
-    channel: Optional[str] = Field(default=None, description="Канал связи: whatsapp / telegram / instagram / api")
+    """
+    Строгая схема валидации входящего сообщения от вебхука мессенджера.
+
+    Валидация:
+      - phone_number: обязательно, минимум 5 символов, только цифры/+.
+      - Хотя бы одно из полей message / image_url / audio_path должно быть заполнено.
+      - channel: если указан, должен быть из разрешённых.
+    """
+    phone_number: str = Field(
+        ...,
+        min_length=5,
+        max_length=30,
+        description="Номер телефона клиента в международном формате или ID отправителя",
+    )
+    message: Optional[str] = Field(
+        default=None,
+        max_length=10000,
+        description="Текст сообщения клиента",
+    )
+    client_name: Optional[str] = Field(
+        default=None,
+        max_length=255,
+        description="Имя клиента (если передано мессенджером)",
+    )
+    image_url: Optional[str] = Field(
+        default=None,
+        max_length=2048,
+        description="URL изображения/скриншота",
+    )
+    audio_path: Optional[str] = Field(
+        default=None,
+        max_length=2048,
+        description="Путь к аудиофайлу голосового сообщения",
+    )
+    channel: Optional[str] = Field(
+        default=None,
+        max_length=20,
+        description="Канал связи: whatsapp / telegram / instagram / api",
+    )
+
+    @field_validator("phone_number")
+    @classmethod
+    def validate_phone_number(cls, v: str) -> str:
+        """Проверка формата номера телефона / идентификатора."""
+        cleaned = v.strip()
+        if not cleaned:
+            raise ValueError("Номер телефона / ID отправителя не может быть пустым.")
+        return cleaned
+
+    @field_validator("channel")
+    @classmethod
+    def validate_channel(cls, v: Optional[str]) -> Optional[str]:
+        """Проверка канала связи."""
+        if v is None:
+            return v
+        allowed = {"whatsapp", "telegram", "instagram", "api"}
+        v_lower = v.strip().lower()
+        if v_lower not in allowed:
+            raise ValueError(
+                f"Недопустимый канал связи: '{v}'. "
+                f"Допустимые: {', '.join(sorted(allowed))}"
+            )
+        return v_lower
+
+    @field_validator("message")
+    @classmethod
+    def validate_message_not_blank(cls, v: Optional[str]) -> Optional[str]:
+        """Отсекаем пустые строки / пробелы."""
+        if v is not None:
+            v = v.strip()
+            if not v:
+                return None
+        return v
+
+    @model_validator(mode="after")
+    def at_least_one_content_field(self) -> "WebhookIncomingMessage":
+        """Верификация: хотя бы одно поле содержимого обязательно."""
+        if not self.message and not self.image_url and not self.audio_path:
+            raise ValueError(
+                "Входящее сообщение должно содержать хотя бы одно: "
+                "message (текст), image_url (изображение) или audio_path (аудио)."
+            )
+        return self
 
 
 class WebhookResponse(BaseModel):

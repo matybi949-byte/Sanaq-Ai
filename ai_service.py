@@ -15,15 +15,43 @@ ai_service.py -- Модуль интеграции с ИИ (OpenAI-совмес�
 import os
 import re
 import json
+import time
 import logging
-from typing import Optional, Tuple, List, Dict, Any
+from typing import Optional, Tuple, List, Dict, Any, Union
 
 import requests
 from dotenv import load_dotenv
+from sqlalchemy.orm import Session
+
+from models import Business, Product
 
 load_dotenv()
 
 logger = logging.getLogger(__name__)
+
+
+# ──────────────────────────────────────────────
+# Классы исключений OpenAI API (для отказоустойчивости)
+# ──────────────────────────────────────────────
+
+try:
+    from openai import RateLimitError, APIConnectionError, APIError, OpenAIError
+except ImportError:
+    class OpenAIError(Exception):
+        """Базовый класс исключений OpenAI."""
+        pass
+
+    class RateLimitError(OpenAIError):
+        """Ошибка превышения лимитов запросов (Rate Limit / HTTP 429)."""
+        pass
+
+    class APIConnectionError(OpenAIError):
+        """Ошибка соединения с OpenAI API."""
+        pass
+
+    class APIError(OpenAIError):
+        """Общая ошибка OpenAI API."""
+        pass
 
 
 # ──────────────────────────────────────────────
@@ -37,6 +65,54 @@ DEFAULT_MODEL: str = os.getenv("AI_MODEL", "gpt-4o-mini")
 MAX_HISTORY_MESSAGES: int = int(os.getenv("MAX_HISTORY_MESSAGES", "20"))
 MAX_RESPONSE_TOKENS: int = int(os.getenv("MAX_RESPONSE_TOKENS", "1024"))
 API_TEMPERATURE: float = float(os.getenv("AI_TEMPERATURE", "0.7"))
+
+# Максимальное количество повторных попыток при временных сбоях API
+MAX_API_RETRIES: int = int(os.getenv("MAX_API_RETRIES", "2"))
+RETRY_DELAY_SECONDS: float = float(os.getenv("RETRY_DELAY_SECONDS", "1.5"))
+
+
+# ──────────────────────────────────────────────
+# Фоллбэк-сообщения для клиентов (отказоустойчивость)
+# ──────────────────────────────────────────────
+
+_FALLBACK_MESSAGES = {
+    "ru": {
+        "timeout": "Небольшая техническая заминка, уже чиним! Попробуйте отправить сообщение через минуту. ⏳",
+        "connection": "Небольшая техническая заминка, уже чиним! Временные неполадки со связью. Попробуйте ещё раз. 🔧",
+        "rate_limit": "Небольшая техническая заминка, уже чиним! Сейчас очень много запросов, подождите минуту. 🙏",
+        "server_error": "Небольшая техническая заминка, уже чиним! Пожалуйста, повторите запрос через пару минут. 🛠",
+        "unknown": "Небольшая техническая заминка, уже чиним! Мы уже знаем и работаем над исправлением. 🙏",
+    },
+    "kk": {
+        "timeout": "Шағын техникалық ақаулық, қазір жөндеп жатырмыз! Бір минуттан кейін қайталап көріңіз. ⏳",
+        "connection": "Шағын техникалық ақаулық, қазір жөндеп жатырмыз! Байланыста уақытша ақау бар. 🔧",
+        "rate_limit": "Шағын техникалық ақаулық, қазір жөндеп жатырмыз! Қазір сұраныстар өте көп. 🙏",
+        "server_error": "Шағын техникалық ақаулық, қазір жөндеп жатырмыз! Бірнеше минуттан кейін қайталаңыз. 🛠",
+        "unknown": "Шағын техникалық ақаулық, қазір жөндеп жатырмыз! Кейінірек қайталап көріңіз. 🙏",
+    },
+    "en": {
+        "timeout": "A small technical hiccup, we're already fixing it! Please try again in a minute. ⏳",
+        "connection": "A small technical hiccup, we're already fixing it! Temporary connection issues. 🔧",
+        "rate_limit": "A small technical hiccup, we're already fixing it! Too many requests right now. 🙏",
+        "server_error": "A small technical hiccup, we're already fixing it! Please try again in a couple of minutes. 🛠",
+        "unknown": "A small technical hiccup, we're already fixing it! An unexpected error occurred. 🙏",
+    },
+}
+
+
+def get_fallback_message(language: str, error_type: str) -> str:
+    """
+    Возвращает вежливое фоллбэк-сообщение для клиента на соответствующем языке.
+
+    Args:
+        language: Язык клиента ('ru', 'kk', 'en').
+        error_type: Тип ошибки ('timeout', 'connection', 'rate_limit', 'server_error', 'unknown').
+
+    Returns:
+        str: Локализованное фоллбэк-сообщение.
+    """
+    lang_messages = _FALLBACK_MESSAGES.get(language, _FALLBACK_MESSAGES["ru"])
+    return lang_messages.get(error_type, lang_messages["unknown"])
 
 
 # ──────────────────────────────────────────────
@@ -98,7 +174,7 @@ SYSTEM_PROMPT_TEMPLATE: str = """
 
 
 def find_alternative_products(
-    db: Any,
+    db: Session,
     business_id: int,
     category: Optional[str] = None,
     exclude_product_id: Optional[int] = None,
@@ -109,8 +185,6 @@ def find_alternative_products(
     Ищет в БД до `limit` альтернативных товаров с наличием (stock > 0) из той же категории.
     Использует строгую фильтрацию по shop_id для обеспечения изоляции данных арендатора.
     """
-    from models import Product
-
     target_shop_id = shop_id if shop_id is not None else business_id
 
     query = db.query(Product).filter(
@@ -171,7 +245,7 @@ def find_alternative_products(
 
 
 def fetch_business_catalog(
-    db: Any,
+    db: Session,
     business_id: int,
     shop_id: Optional[int] = None,
 ) -> Tuple[str, List[Dict[str, Any]], Optional[str]]:
@@ -182,8 +256,6 @@ def fetch_business_catalog(
     Returns:
         Tuple[business_name, products_list, api_key_ai]
     """
-    from models import Business, Product
-
     target_shop_id = shop_id if shop_id is not None else business_id
 
     business = db.query(Business).filter((Business.id == target_shop_id) | (Business.shop_id == target_shop_id)).first()
@@ -426,6 +498,12 @@ def get_ai_response_with_intent(
     """
     Отправляет запрос в ИИ и возвращает кортеж:
     (текст_ответа_клиенту, список_товаров_для_оформления_заказа_или_None).
+
+    Отказоустойчивость:
+      - Повторные попытки (retry) при таймаутах и сбоях соединения.
+      - Обработка RateLimitError (HTTP 429) с понятным фоллбэком клиенту.
+      - Обработка серверных ошибок (HTTP 5xx) без падения.
+      - Полное логирование каждой ошибки в app.log.
     """
     effective_key = api_key or API_KEY
     if not effective_key:
@@ -452,49 +530,197 @@ def get_ai_response_with_intent(
         "Authorization": f"Bearer {effective_key}",
         "Content-Type": "application/json",
     }
-    payload = {
+    request_payload = {
         "model": effective_model,
         "messages": messages,
         "max_tokens": MAX_RESPONSE_TOKENS,
         "temperature": API_TEMPERATURE,
     }
 
-    try:
-        response = requests.post(
-            url,
-            headers=headers,
-            json=payload,
-            timeout=60,
-        )
-    except requests.exceptions.Timeout:
-        logger.error("Таймаут запроса к API (%s)", url)
-        raise RuntimeError("ИИ-сервис не ответил вовремя. Попробуйте позже.")
-    except requests.exceptions.ConnectionError:
-        logger.error("Ошибка соединения с API (%s)", url)
-        raise RuntimeError("Не удалось подключиться к ИИ-сервису.")
+    # ── Retry-цикл с экспоненциальной задержкой ──
+    last_exception: Optional[Exception] = None
+    for attempt in range(1, MAX_API_RETRIES + 1):
+        try:
+            response = requests.post(
+                url,
+                headers=headers,
+                json=request_payload,
+                timeout=60,
+            )
 
-    if response.status_code != 200:
-        error_detail = response.text[:500]
-        logger.error("API вернул ошибку %d: %s", response.status_code, error_detail)
-        raise RuntimeError(f"Ошибка ИИ-сервиса (HTTP {response.status_code}).")
+            # ── HTTP 429: Rate Limit ──
+            if response.status_code == 429:
+                retry_after = response.headers.get("Retry-After")
+                logger.warning(
+                    "[Попытка %d/%d] RateLimitError (HTTP 429) от API. Retry-After: %s | URL: %s",
+                    attempt, MAX_API_RETRIES, retry_after or "не указано", url,
+                )
+                if attempt < MAX_API_RETRIES:
+                    wait_time = float(retry_after) if retry_after else RETRY_DELAY_SECONDS * attempt
+                    time.sleep(min(wait_time, 10.0))
+                    continue
+                # Все попытки исчерпаны
+                logger.error(
+                    "RATE LIMIT ИСЧЕРПАН: OpenAI API вернул 429 после %d попыток. "
+                    "Бизнес ID: %s | Модель: %s | URL: %s",
+                    MAX_API_RETRIES, business_id, effective_model, url,
+                )
+                return get_fallback_message(lang, "rate_limit"), None
 
-    data = response.json()
+            # ── HTTP 5xx: Серверная ошибка OpenAI ──
+            if response.status_code >= 500:
+                error_detail = response.text[:500]
+                logger.warning(
+                    "[Попытка %d/%d] Серверная ошибка OpenAI (HTTP %d): %s",
+                    attempt, MAX_API_RETRIES, response.status_code, error_detail,
+                )
+                if attempt < MAX_API_RETRIES:
+                    time.sleep(RETRY_DELAY_SECONDS * attempt)
+                    continue
+                logger.error(
+                    "СЕРВЕРНАЯ ОШИБКА OpenAI: HTTP %d после %d попыток. "
+                    "Бизнес ID: %s | Response: %s",
+                    response.status_code, MAX_API_RETRIES, business_id, error_detail,
+                )
+                return get_fallback_message(lang, "server_error"), None
 
-    try:
-        raw_assistant_message = data["choices"][0]["message"]["content"].strip()
-        logger.info("Успешный ответ от OpenAI (длина: %d символов)", len(raw_assistant_message))
-    except (KeyError, IndexError) as e:
-        logger.error("Неожиданный формат ответа API: %s", e)
-        raise RuntimeError("Получен некорректный ответ от ИИ-сервиса.")
+            # ── HTTP 401/403: Ошибка авторизации (не ретраим) ──
+            if response.status_code in (401, 403):
+                error_detail = response.text[:500]
+                logger.error(
+                    "ОШИБКА АВТОРИЗАЦИИ OpenAI (HTTP %d): %s | Бизнес ID: %s",
+                    response.status_code, error_detail, business_id,
+                )
+                raise ValueError(
+                    f"Ошибка авторизации API (HTTP {response.status_code}). "
+                    "Проверьте OPENAI_API_KEY в настройках бизнеса."
+                )
 
-    # Распознаём намерение заказа
-    clean_reply, order_items = parse_order_intent(raw_assistant_message)
+            # ── Прочие HTTP-ошибки (4xx) ──
+            if response.status_code != 200:
+                error_detail = response.text[:500]
+                logger.error(
+                    "API вернул ошибку HTTP %d (бизнес %s): %s",
+                    response.status_code, business_id, error_detail,
+                )
+                return get_fallback_message(lang, "server_error"), None
 
-    return clean_reply, order_items
+            # ── Успешный ответ: парсинг ──
+            try:
+                data = response.json()
+            except (ValueError, json.JSONDecodeError) as json_err:
+                logger.error(
+                    "Не удалось распарсить JSON-ответ OpenAI: %s | Raw response: %s",
+                    json_err, response.text[:300],
+                )
+                return get_fallback_message(lang, "server_error"), None
+
+            try:
+                raw_assistant_message = data["choices"][0]["message"]["content"].strip()
+                logger.info("Успешный ответ от OpenAI (длина: %d символов)", len(raw_assistant_message))
+            except (KeyError, IndexError, TypeError) as e:
+                logger.error(
+                    "Неожиданный формат ответа API (бизнес %s): %s | Data keys: %s",
+                    business_id, e, list(data.keys()) if isinstance(data, dict) else type(data),
+                )
+                return get_fallback_message(lang, "server_error"), None
+
+            # Распознаём намерение заказа
+            clean_reply, order_items = parse_order_intent(raw_assistant_message)
+            return clean_reply, order_items
+
+        except RateLimitError as exc:
+            last_exception = exc
+            logger.error(
+                "[Попытка %d/%d] RateLimitError от OpenAI API: %s | Бизнес ID: %s | URL: %s",
+                attempt, MAX_API_RETRIES, exc, business_id, url, exc_info=True,
+            )
+            if attempt < MAX_API_RETRIES:
+                time.sleep(RETRY_DELAY_SECONDS * attempt)
+                continue
+            return get_fallback_message(lang, "rate_limit"), None
+
+        except APIConnectionError as exc:
+            last_exception = exc
+            logger.error(
+                "[Попытка %d/%d] APIConnectionError при подключении к OpenAI API: %s | Бизнес ID: %s",
+                attempt, MAX_API_RETRIES, exc, business_id, exc_info=True,
+            )
+            if attempt < MAX_API_RETRIES:
+                time.sleep(RETRY_DELAY_SECONDS * attempt)
+                continue
+            return get_fallback_message(lang, "connection"), None
+
+        except APIError as exc:
+            last_exception = exc
+            logger.error(
+                "[Попытка %d/%d] APIError от OpenAI API: %s | Бизнес ID: %s",
+                attempt, MAX_API_RETRIES, exc, business_id, exc_info=True,
+            )
+            if attempt < MAX_API_RETRIES:
+                time.sleep(RETRY_DELAY_SECONDS * attempt)
+                continue
+            return get_fallback_message(lang, "server_error"), None
+
+        except requests.exceptions.Timeout as exc:
+            last_exception = exc
+            logger.warning(
+                "[Попытка %d/%d] Таймаут запроса к OpenAI API (%s). Бизнес ID: %s",
+                attempt, MAX_API_RETRIES, url, business_id, exc_info=True,
+            )
+            if attempt < MAX_API_RETRIES:
+                time.sleep(RETRY_DELAY_SECONDS * attempt)
+                continue
+
+        except requests.exceptions.ConnectionError as exc:
+            last_exception = exc
+            logger.warning(
+                "[Попытка %d/%d] Ошибка соединения с OpenAI API (%s). Бизнес ID: %s | Ошибка: %s",
+                attempt, MAX_API_RETRIES, url, business_id, exc, exc_info=True,
+            )
+            if attempt < MAX_API_RETRIES:
+                time.sleep(RETRY_DELAY_SECONDS * attempt)
+                continue
+
+        except requests.exceptions.RequestException as exc:
+            last_exception = exc
+            logger.error(
+                "[Попытка %d/%d] Ошибка HTTP-запроса к OpenAI API: %s | Бизнес ID: %s",
+                attempt, MAX_API_RETRIES, exc, business_id, exc_info=True,
+            )
+            if attempt < MAX_API_RETRIES:
+                time.sleep(RETRY_DELAY_SECONDS * attempt)
+                continue
+
+        except Exception as exc:
+            last_exception = exc
+            logger.error(
+                "[Попытка %d/%d] Неожиданное исключение при вызове OpenAI API: %s | Бизнес ID: %s",
+                attempt, MAX_API_RETRIES, exc, business_id, exc_info=True,
+            )
+            if attempt < MAX_API_RETRIES:
+                time.sleep(RETRY_DELAY_SECONDS * attempt)
+                continue
+
+    # Все retry-попытки исчерпаны
+    error_type = "timeout"
+    if last_exception and isinstance(last_exception, (requests.exceptions.ConnectionError, APIConnectionError)):
+        error_type = "connection"
+    elif last_exception and isinstance(last_exception, RateLimitError):
+        error_type = "rate_limit"
+    elif last_exception and not isinstance(last_exception, requests.exceptions.Timeout):
+        error_type = "unknown"
+
+    logger.error(
+        "ВСЕ ПОПЫТКИ ИСЧЕРПАНЫ (%d): запрос к OpenAI API не удался. "
+        "Бизнес ID: %s | Последняя ошибка: %s",
+        MAX_API_RETRIES, business_id, last_exception, exc_info=True,
+    )
+    return get_fallback_message(lang, error_type), None
 
 
 def get_ai_response_for_business(
-    db: Any,
+    db: Session,
     business_id: int,
     user_message: str,
     chat_history: List[Dict[str, Any]],
@@ -583,11 +809,33 @@ def analyze_image_for_article(
 
     try:
         response = requests.post(url, headers=headers, json=payload, timeout=60)
+
+        # Rate Limit (429)
+        if response.status_code == 429:
+            logger.warning(
+                "Vision API: RateLimitError (HTTP 429). Image URL: %s",
+                image_url[:100],
+            )
+            return None
+
+        # Серверные ошибки (5xx)
+        if response.status_code >= 500:
+            logger.error(
+                "Vision API: серверная ошибка (HTTP %d): %s",
+                response.status_code, response.text[:300],
+            )
+            return None
+
         if response.status_code != 200:
             logger.error("Vision API вернул ошибку %d: %s", response.status_code, response.text[:300])
             return None
 
-        data = response.json()
+        try:
+            data = response.json()
+        except (ValueError, json.JSONDecodeError) as json_err:
+            logger.error("Vision API: не удалось распарсить JSON-ответ: %s", json_err)
+            return None
+
         raw_result = data["choices"][0]["message"]["content"].strip()
 
         if not raw_result or "НЕ НАЙДЕНО" in raw_result.upper() or "NOT FOUND" in raw_result.upper():
@@ -597,8 +845,17 @@ def analyze_image_for_article(
         logger.info("Успешно извлечен артикул со скриншота: %s", raw_result)
         return raw_result
 
+    except requests.exceptions.Timeout:
+        logger.error("Vision API: таймаут запроса. Image URL: %s", image_url[:100])
+        return None
+    except requests.exceptions.ConnectionError as conn_err:
+        logger.error("Vision API: ошибка соединения: %s", conn_err)
+        return None
+    except (KeyError, IndexError, TypeError) as parse_err:
+        logger.error("Vision API: неожиданный формат ответа: %s", parse_err)
+        return None
     except Exception as e:
-        logger.error("Ошибка при анализе изображения через OpenAI Vision API: %s", e)
+        logger.error("Vision API: непредвиденная ошибка при анализе изображения: %s", e)
         return None
 
 
@@ -647,25 +904,56 @@ def transcribe_voice(
             data = {"model": effective_model}
             response = requests.post(url, headers=headers, files=files, data=data, timeout=60)
 
+        # Rate Limit (429)
+        if response.status_code == 429:
+            retry_after = response.headers.get("Retry-After", "неизвестно")
+            logger.error(
+                "Whisper API: RateLimitError (HTTP 429). Retry-After: %s | Файл: %s",
+                retry_after, audio_path,
+            )
+            raise RuntimeError(
+                "Слишком много запросов к сервису распознавания речи. "
+                "Пожалуйста, подождите минуту и повторите."
+            )
+
+        # Серверные ошибки (5xx)
+        if response.status_code >= 500:
+            error_detail = response.text[:300]
+            logger.error(
+                "Whisper API: серверная ошибка (HTTP %d): %s | Файл: %s",
+                response.status_code, error_detail, audio_path,
+            )
+            raise RuntimeError(
+                f"Сервис распознавания речи временно недоступен (HTTP {response.status_code}). "
+                "Попробуйте позже."
+            )
+
         if response.status_code != 200:
             error_detail = response.text[:300]
             logger.error("Whisper API вернул ошибку %d: %s", response.status_code, error_detail)
             raise RuntimeError(f"Ошибка Whisper API (HTTP {response.status_code}): {error_detail}")
 
-        res_json = response.json()
+        try:
+            res_json = response.json()
+        except (ValueError, json.JSONDecodeError) as json_err:
+            logger.error("Whisper API: не удалось распарсить JSON-ответ: %s", json_err)
+            raise RuntimeError("Получен некорректный ответ от сервиса распознавания речи.")
+
         transcribed_text = res_json.get("text", "").strip()
         logger.info("Голосовое сообщение успешно расшифровано: '%s'", transcribed_text)
         return transcribed_text
 
     except requests.exceptions.Timeout:
-        logger.error("Таймаут запроса к Whisper API")
+        logger.error("Таймаут запроса к Whisper API. Файл: %s", audio_path)
         raise RuntimeError("Whisper API не ответил вовремя. Попробуйте позже.")
-    except requests.exceptions.ConnectionError:
-        logger.error("Ошибка соединения с Whisper API")
+    except requests.exceptions.ConnectionError as conn_err:
+        logger.error("Ошибка соединения с Whisper API: %s | Файл: %s", conn_err, audio_path)
         raise RuntimeError("Не удалось подключиться к сервису Whisper API.")
+    except RuntimeError:
+        raise  # Пробрасываем уже обработанные RuntimeError
     except Exception as e:
-        logger.error("Ошибка транскрибации аудиофайла %s: %s", audio_path, e)
-        raise
+        logger.error("Непредвиденная ошибка транскрибации аудиофайла %s: %s", audio_path, e, exc_info=True)
+        raise RuntimeError(f"Ошибка при распознавании голосового сообщения: {e}")
 
 
 def prepare_incoming_message(

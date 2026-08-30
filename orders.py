@@ -10,7 +10,7 @@ import os
 import logging
 import requests
 from typing import List, Dict, Any, Optional, Tuple
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator, model_validator
 from sqlalchemy.orm import Session
 
 from models import Business, Product, Client, Order, OrderItem
@@ -24,18 +24,87 @@ logger = logging.getLogger(__name__)
 # ──────────────────────────────────────────────
 
 class OrderItemInput(BaseModel):
-    """Схема одной позиции заказа в запросе."""
-    product_id: Optional[int] = Field(default=None, description="ID товара в БД")
-    product_name: Optional[str] = Field(default=None, description="Название товара (если ID не указан)")
-    quantity: int = Field(default=1, ge=1, description="Количество товара")
+    """
+    Строгая схема одной позиции заказа в запросе.
+
+    Валидация:
+      - quantity: обязательно целое число > 0 (int, ge=1).
+      - Хотя бы одно из полей product_id / product_name обязательно.
+      - product_name: не может быть пустой строкой.
+    """
+    product_id: Optional[int] = Field(default=None, ge=1, description="ID товара в БД (целое число > 0)")
+    product_name: Optional[str] = Field(default=None, min_length=1, max_length=255, description="Название товара (если ID не указан)")
+    quantity: int = Field(default=1, ge=1, le=9999, description="Количество товара (целое число от 1 до 9999)")
+
+    @field_validator("quantity", mode="before")
+    @classmethod
+    def validate_quantity_is_positive_int(cls, v: Any) -> int:
+        """Quantity must be a positive integer (strictly > 0)."""
+        if isinstance(v, bool):
+            raise ValueError("Количество (quantity) должно быть целым числом, а не boolean.")
+        if isinstance(v, float):
+            if not v.is_integer():
+                raise ValueError(f"Количество (quantity) должно быть целым числом, получено дробное: {v}")
+            v = int(v)
+        try:
+            val = int(v)
+        except (ValueError, TypeError):
+            raise ValueError(f"Количество (quantity) должно быть целым числом, получено: {type(v).__name__}")
+        if val <= 0:
+            raise ValueError(f"Количество (quantity) должно быть больше нуля, получено: {val}")
+        return val
+
+    @field_validator("product_name")
+    @classmethod
+    def validate_product_name_not_blank(cls, v: Optional[str]) -> Optional[str]:
+        """Product name cannot be blank whitespace."""
+        if v is not None:
+            v = v.strip()
+            if not v:
+                raise ValueError("Название товара (product_name) не может быть пустой строкой.")
+        return v
+
+    @model_validator(mode="after")
+    def at_least_one_product_reference(self) -> "OrderItemInput":
+        """At least one of product_id or product_name must be provided."""
+        if self.product_id is None and not self.product_name:
+            raise ValueError(
+                "Для позиции заказа нужно указать хотя бы одно: "
+                "product_id (ID товара) или product_name (название товара)."
+            )
+        return self
 
 
 class OrderCreateRequest(BaseModel):
-    """Схема запроса на создание заказа."""
-    business_id: int
-    phone_number: str
-    client_name: Optional[str] = None
-    items: List[OrderItemInput]
+    """
+    Строгая схема запроса на создание заказа.
+
+    Валидация:
+      - business_id: целое число > 0.
+      - phone_number: обязательно, минимум 5 символов.
+      - items: список позиций, не может быть пустым.
+    """
+    business_id: int = Field(..., ge=1, description="ID бизнеса (целое число > 0)")
+    phone_number: str = Field(..., min_length=5, max_length=30, description="Номер телефона клиента")
+    client_name: Optional[str] = Field(default=None, max_length=255, description="Имя клиента")
+    items: List[OrderItemInput] = Field(..., min_length=1, description="Список позиций заказа (минимум 1)")
+
+    @field_validator("phone_number")
+    @classmethod
+    def validate_phone_format(cls, v: str) -> str:
+        """Phone number must not be blank."""
+        cleaned = v.strip()
+        if not cleaned:
+            raise ValueError("Номер телефона не может быть пустым.")
+        return cleaned
+
+    @field_validator("items")
+    @classmethod
+    def validate_items_not_empty(cls, v: List[OrderItemInput]) -> List[OrderItemInput]:
+        """Items list must contain at least one item."""
+        if not v:
+            raise ValueError("Список позиций заказа (items) не может быть пустым.")
+        return v
 
 
 class OrderItemDetail(BaseModel):

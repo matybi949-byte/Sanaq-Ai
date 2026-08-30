@@ -68,6 +68,10 @@ class Settings(BaseSettings):
         default="sanaq_ai_verify_token",
         description="Токен верификации вебхуков Meta (WhatsApp/Instagram)",
     )
+    WEBHOOK_URL: str = Field(
+        default="",
+        description="Внешний публичный URL сервера для регистрации Telegram setWebhook",
+    )
 
     # ── Сервер ────────────────────────────────
     HOST: str = Field(default="0.0.0.0", description="Хост сервера")
