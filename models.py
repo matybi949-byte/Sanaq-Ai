@@ -10,7 +10,7 @@ models.py -- Модели базы данных (SQLAlchemy ORM).
   - OrderItem   -- позиция (строка) заказа
 """
 
-from datetime import datetime
+from datetime import datetime, timezone
 
 from sqlalchemy import (
     Boolean,
@@ -236,7 +236,7 @@ class ChatMessage(Base):
     timestamp = Column(
         DateTime,
         nullable=False,
-        default=datetime.utcnow,
+        default=lambda: datetime.now(timezone.utc),
         comment="Время отправки",
     )
 
@@ -313,7 +313,7 @@ class Order(Base):
     created_at = Column(
         DateTime,
         nullable=False,
-        default=datetime.utcnow,
+        default=lambda: datetime.now(timezone.utc),
         comment="Дата создания",
     )
 

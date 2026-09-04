@@ -30,7 +30,7 @@ class Settings(BaseSettings):
         default="https://api.openai.com/v1",
         description="Базовый URL OpenAI-совместимого API",
     )
-    AI_MODEL: str = Field(default="gpt-4o-mini", description="Модель ИИ для чата")
+    AI_MODEL: str = Field(default="gpt-5.6-luna", description="Модель ИИ для чата")
     WHISPER_MODEL: str = Field(default="whisper-1", description="Модель Whisper для транскрибации")
     AI_TEMPERATURE: float = Field(default=0.7, ge=0.0, le=2.0, description="Температура генерации")
     MAX_RESPONSE_TOKENS: int = Field(default=1024, ge=64, le=4096, description="Макс. токенов в ответе")
@@ -46,6 +46,10 @@ class Settings(BaseSettings):
     TELEGRAM_BOT_TOKEN: str = Field(default="", alias="BOT_TOKEN", description="Токен Telegram-бота")
     ADMIN_ID: str = Field(default="", description="ID админов через запятую")
     DEFAULT_BUSINESS_ID: int = Field(default=1, description="ID бизнеса по умолчанию")
+    MONITORING_CHANNEL_ID: str = Field(
+        default="-4433809117",
+        description="ID Telegram-канала для алертов о критических системных ошибках",
+    )
 
     # ── Интеграция ABCP / Каталог ─────────────
     ABCP_API_URL: str = Field(default="", description="URL API ABCP (если используется)")

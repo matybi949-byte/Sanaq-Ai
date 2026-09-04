@@ -2,7 +2,7 @@
 
 [![Python](https://img.shields.io/badge/Python-3.11-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.115.0-009688?style=for-the-badge&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
-[![OpenAI](https://img.shields.io/badge/OpenAI-GPT--4o--mini-412991?style=for-the-badge&logo=openai&logoColor=white)](https://openai.com/)
+[![OpenAI](https://img.shields.io/badge/OpenAI-GPT--5.6--luna-412991?style=for-the-badge&logo=openai&logoColor=white)](https://openai.com/)
 [![SQLite](https://img.shields.io/badge/SQLite-WAL--Mode-003B57?style=for-the-badge&logo=sqlite&logoColor=white)](https://www.sqlite.org/)
 [![Docker](https://img.shields.io/badge/Docker-Ready-2496ED?style=for-the-badge&logo=docker&logoColor=white)](https://www.docker.com/)
 [![Aiogram](https://img.shields.io/badge/Aiogram-3.x-2CA5E0?style=for-the-badge&logo=telegram&logoColor=white)](https://docs.aiogram.dev/)
@@ -28,7 +28,7 @@
 ## 1. Описание проекта и ключевые фишки
 
 ### 🤖 1. Умный ИИ-Консультант
-* **LLM & Мультимодальность**: Работает на базе OpenAI `gpt-4o-mini`.
+* **LLM & Мультимодальность**: Работает на базе OpenAI `gpt-5.6-luna`.
 * **Vision (Распознавание изображений)**: Клиент может отправить фото товара или скриншот из каталога — ИИ автоматически определит артикул и найдет товар в базе данных.
 * **Whisper (Голосовые сообщения)**: Автоматическая расшифровка входящих голосовых заметок клиента через модель `whisper-1` и мгновенный ответ на текст запроса.
 
@@ -103,7 +103,7 @@ OPENAI_API_KEY=sk-proj-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 OPENAI_API_BASE=https://api.openai.com/v1
 
 # Модели OpenAI
-AI_MODEL=gpt-4o-mini
+AI_MODEL=gpt-5.6-luna
 WHISPER_MODEL=whisper-1
 
 # Гиперпараметры генерации
@@ -268,7 +268,7 @@ curl http://localhost:8000/health
   "status": "ok",
   "service": "Sanaq AI",
   "version": "1.0.0",
-  "model": "gpt-4o-mini",
+  "model": "gpt-5.6-luna",
   "timestamp": "2026-08-30T22:00:00+00:00"
 }
 ```

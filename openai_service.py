@@ -2,7 +2,7 @@
 openai_service.py -- Асинхронный клиент OpenAI API (httpx-based).
 
 Легковесный модуль для прямого взаимодействия с OpenAI-совместимыми API:
-  - chat_completion()      — текстовая генерация (gpt-4o-mini)
+  - chat_completion()      — текстовая генерация (gpt-5.6-luna)
   - vision_analyze()       — анализ изображений (Vision API)
   - whisper_transcribe()   — транскрибация аудио (Whisper API)
 
@@ -154,7 +154,7 @@ class OpenAIClient:
         )
 
     # ──────────────────────────────────────────
-    # Chat Completion (gpt-4o-mini)
+    # Chat Completion (gpt-5.6-luna)
     # ──────────────────────────────────────────
 
     async def chat_completion(

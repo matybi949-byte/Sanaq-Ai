@@ -27,10 +27,15 @@ from aiogram.filters import Command
 from aiogram.enums import ParseMode
 from aiogram.client.default import DefaultBotProperties
 
+import tempfile
 from database import SessionLocal, engine, Base
 from models import Business, Product, Order, OrderItem, Client
 from analytics import get_daily_analytics, format_daily_report, send_daily_report_to_admin
 from payments import confirm_manual_payment, reject_manual_payment
+from ai_service import transcribe_voice, get_ai_response_for_business
+from error_notifier import send_critical_error, async_send_critical_error, TelegramErrorLoggingHandler
+from db_backup import send_db_backup_to_telegram
+from heartbeat import async_send_uptime_heartbeat
 
 load_dotenv()
 
@@ -72,6 +77,9 @@ logging.basicConfig(
     format="%(asctime)s - %(levelname)s - %(name)s - %(message)s",
 )
 logger = logging.getLogger("tg_admin_bot")
+telegram_error_handler = TelegramErrorLoggingHandler(level=logging.ERROR)
+logger.addHandler(telegram_error_handler)
+logging.getLogger().addHandler(telegram_error_handler)
 
 
 # ──────────────────────────────────────────────
@@ -223,6 +231,19 @@ def db_update_stock(business_id: int, product_id: int, new_stock: int) -> Option
 dp = Dispatcher()
 dp.message.middleware(AdminAccessMiddleware())
 dp.callback_query.middleware(AdminAccessMiddleware())
+
+
+@dp.error()
+async def error_handler(event: types.ErrorEvent):
+    """
+    Глобальный обработчик ошибок Telegram-бота.
+    Автоматически отправляет детализированную информацию об ошибке в канал мониторинга.
+    """
+    logger.error("Критическая ошибка при обработке Telegram события: %s", event.exception, exc_info=True)
+    await async_send_critical_error(
+        error=event.exception,
+        context="Telegram Bot Event Handler",
+    )
 
 
 @dp.message(Command("start", "help"))
@@ -515,6 +536,132 @@ async def cmd_resolve(message: types.Message):
             f"ИИ-менеджер снова обрабатывает сообщения этого клиента.",
             parse_mode=ParseMode.HTML,
         )
+
+
+@dp.message(Command("backup"))
+async def cmd_backup(message: types.Message):
+    """Принудительное создание и отправка резервной копии базы данных."""
+    await message.answer("⏳ <i>Создаю резервную копию базы данных (SQLite WAL Backup)...</i>", parse_mode=ParseMode.HTML)
+    success = await asyncio.to_thread(send_db_backup_to_telegram, target_chat_id=str(message.chat.id))
+    if success:
+        await message.answer("✅ <b>Резервная копия базы данных успешно отправлена!</b>", parse_mode=ParseMode.HTML)
+    else:
+        await message.answer("❌ <b>Не удалось отправить бэкап.</b> Проверьте настройки токена бота.", parse_mode=ParseMode.HTML)
+
+
+@dp.message(Command("heartbeat"))
+async def cmd_heartbeat(message: types.Message):
+    """Проверка доступности и статуса системы (Heartbeat)."""
+    await message.answer("⏳ <i>Получаю системные метрики...</i>", parse_mode=ParseMode.HTML)
+    success = await async_send_uptime_heartbeat(target_chat_id=str(message.chat.id))
+    if not success:
+        await message.answer("⚠️ <b>Не удалось отправить статус в чат.</b>", parse_mode=ParseMode.HTML)
+
+
+# ──────────────────────────────────────────────
+# Обработчики голосовых и текстовых сообщений (OpenAI Whisper & gpt-5.6-luna)
+# ──────────────────────────────────────────────
+
+@dp.message(F.voice)
+async def handle_voice_message(message: types.Message, bot: Bot):
+    """
+    Обработка входящих голосовых сообщений (.voice):
+    1. Скачивание голосового сообщения во временный файл.
+    2. Транскрипция с использованием модели 'whisper-1' через OpenAI API.
+    3. Передача транскрибированного текста в модель 'gpt-5.6-luna' в качестве сообщения пользователя.
+    4. Отправка ответа от модели пользователю в Telegram.
+    5. Обработка ошибок и гарантированное удаление временных файлов в блоке finally.
+    """
+    voice = message.voice
+    if not voice:
+        await message.answer("❌ Голосовое сообщение не найдено.")
+        return
+
+    status_msg = await message.answer("🎙 <i>Слушаю голосовое сообщение...</i>", parse_mode=ParseMode.HTML)
+
+    temp_path = None
+    try:
+        # 1. Скачивание во временный файл
+        file_info = await bot.get_file(voice.file_id)
+        file_ext = os.path.splitext(file_info.file_path)[1] or ".ogg"
+
+        with tempfile.NamedTemporaryFile(suffix=file_ext, delete=False) as tmp_file:
+            temp_path = tmp_file.name
+
+        await bot.download_file(file_info.file_path, destination=temp_path)
+        logger.info("Голосовое сообщение Telegram скачано во временный файл: %s", temp_path)
+
+        # 2. Транскрипция аудио через модель 'whisper-1' OpenAI API
+        transcribed_text = await asyncio.to_thread(transcribe_voice, temp_path)
+
+        if not transcribed_text or not transcribed_text.strip():
+            await status_msg.edit_text("⚠️ Не удалось распознать речь в голосовом сообщении.", parse_mode=ParseMode.HTML)
+            return
+
+        logger.info("Голосовое сообщение расшифровано (whisper-1): '%s'", transcribed_text)
+        await status_msg.edit_text(
+            f"🗣 <b>Вы сказали (whisper-1):</b> <i>«{transcribed_text}»</i>\n\n⏳ <i>Формирую ответ ИИ (gpt-5.6-luna)...</i>",
+            parse_mode=ParseMode.HTML,
+        )
+
+        # 3. Передача текста в модель 'gpt-5.6-luna'
+        def _get_ai_reply():
+            with SessionLocal() as db:
+                reply, _ = get_ai_response_for_business(
+                    db=db,
+                    business_id=DEFAULT_BUSINESS_ID,
+                    user_message=transcribed_text,
+                    chat_history=[],
+                )
+                return reply
+
+        ai_reply = await asyncio.to_thread(_get_ai_reply)
+
+        # 4. Отправка ответа обратно пользователю в Telegram
+        await message.answer(ai_reply, parse_mode=ParseMode.HTML)
+
+    except Exception as exc:
+        logger.error("Ошибка при обработке голосового сообщения: %s", exc, exc_info=True)
+        await message.answer(
+            f"❌ <b>Ошибка при обработке голосового сообщения:</b>\n<code>{exc}</code>",
+            parse_mode=ParseMode.HTML,
+        )
+    finally:
+        # 5. Корректное удаление временного файла
+        if temp_path and os.path.exists(temp_path):
+            try:
+                os.remove(temp_path)
+                logger.info("Временный аудиофайл удален: %s", temp_path)
+            except Exception as clean_err:
+                logger.warning("Не удалось удалить временный файл %s: %s", temp_path, clean_err)
+
+
+@dp.message(F.text & ~F.text.startswith("/"))
+async def handle_text_message(message: types.Message):
+    """
+    Обработка обычных текстовых сообщений клиентов в Telegram:
+    Передает текст пользователя в модель ИИ ('gpt-5.6-luna') и отправляет ответ.
+    """
+    user_text = message.text.strip()
+    if not user_text:
+        return
+
+    def _get_ai_reply():
+        with SessionLocal() as db:
+            reply, _ = get_ai_response_for_business(
+                db=db,
+                business_id=DEFAULT_BUSINESS_ID,
+                user_message=user_text,
+                chat_history=[],
+            )
+            return reply
+
+    try:
+        ai_reply = await asyncio.to_thread(_get_ai_reply)
+        await message.answer(ai_reply, parse_mode=ParseMode.HTML)
+    except Exception as exc:
+        logger.error("Ошибка при генерации ответа ИИ: %s", exc, exc_info=True)
+        await message.answer(f"❌ <b>Ошибка ИИ-сервиса:</b> <code>{exc}</code>", parse_mode=ParseMode.HTML)
 
 
 # ──────────────────────────────────────────────

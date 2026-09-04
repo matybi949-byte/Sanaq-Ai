@@ -12,7 +12,7 @@ import os
 import logging
 from typing import Optional, Dict, Any, Tuple, List
 import httpx
-from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
+from fastapi import APIRouter, Depends, HTTPException, Request, Response, status, BackgroundTasks
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
@@ -378,13 +378,14 @@ async def process_incoming_channel_message(
     image_url: Optional[str] = None,
     audio_path: Optional[str] = None,
     auto_send: bool = True,
+    background_tasks: Optional[BackgroundTasks] = None,
 ) -> MessengerWebhookResponse:
     """
     Единый обработчик ИИ:
     1. Направляет текст/медиа из любого канала в общий ИИ-менеджер.
     2. Загружает каталог товаров бизнеса и историю сообщений.
     3. Получает ответ от ИИ.
-    4. Отправляет ответ обратно клиенту через универсальную функцию отправки.
+    4. Отправляет ответ обратно клиенту через универсальную функцию отправки (синхронно или в фоновом режиме через BackgroundTasks).
     """
     if not sender_id:
         raise HTTPException(
@@ -417,12 +418,22 @@ async def process_incoming_channel_message(
     # 3. Универсальная отправка ответа обратно в мессенджер
     sent_to_client = False
     if auto_send and result.reply:
-        sent_to_client = await send_reply_to_messenger(
-            channel=channel,
-            recipient_id=sender_id,
-            text=result.reply,
-            business_id=business_id,
-        )
+        if background_tasks:
+            background_tasks.add_task(
+                send_reply_to_messenger,
+                channel=channel,
+                recipient_id=sender_id,
+                text=result.reply,
+                business_id=business_id,
+            )
+            sent_to_client = True
+        else:
+            sent_to_client = await send_reply_to_messenger(
+                channel=channel,
+                recipient_id=sender_id,
+                text=result.reply,
+                business_id=business_id,
+            )
 
     return MessengerWebhookResponse(
         status="success",
@@ -471,6 +482,7 @@ async def whatsapp_verify(
 @limiter.limit("10/minute")
 async def whatsapp_webhook(
     request: Request,
+    background_tasks: BackgroundTasks,
     business_id: Optional[int] = None,
     db: Session = Depends(get_db),
 ):
@@ -502,6 +514,7 @@ async def whatsapp_webhook(
         image_url=image_url,
         audio_path=audio_path,
         auto_send=True,
+        background_tasks=background_tasks,
     )
 
 
@@ -542,6 +555,7 @@ async def instagram_verify(
 @limiter.limit("10/minute")
 async def instagram_webhook(
     request: Request,
+    background_tasks: BackgroundTasks,
     business_id: Optional[int] = None,
     db: Session = Depends(get_db),
 ):
@@ -573,6 +587,7 @@ async def instagram_webhook(
         image_url=image_url,
         audio_path=audio_path,
         auto_send=True,
+        background_tasks=background_tasks,
     )
 
 
@@ -636,6 +651,7 @@ async def api_setup_telegram_webhook():
 @limiter.limit("30/minute")
 async def telegram_webhook(
     request: Request,
+    background_tasks: BackgroundTasks,
     business_id: Optional[int] = None,
     db: Session = Depends(get_db),
 ):
@@ -675,6 +691,7 @@ async def telegram_webhook(
             image_url=image_url,
             audio_path=audio_path,
             auto_send=True,
+            background_tasks=background_tasks,
         )
         return response
     finally:

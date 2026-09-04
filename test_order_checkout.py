@@ -86,27 +86,33 @@ class TestOrderCheckoutFlow(unittest.TestCase):
         self.assertEqual(order.status, "pending_checkout")
         self.assertEqual(order.checkout_step, "awaiting_name")
         self.assertEqual(order.total_price, 13500.0)
-        self.assertIn("Шаг 1 из 4", prompt)
+        self.assertIn("Шаг 1 из 5", prompt)
 
-        # 2. Шаг 1: Ввод Имя
+        # 2. Шаг 1: Ввод Имени
         res_name = process_checkout_step(self.db, order, "Нурсултан")
         self.assertEqual(order.delivery_name, "Нурсултан")
         self.assertEqual(order.checkout_step, "awaiting_phone")
-        self.assertIn("Шаг 2 из 4", res_name)
+        self.assertIn("Шаг 2 из 5", res_name)
 
         # 3. Шаг 2: Ввод Телефона
         res_phone = process_checkout_step(self.db, order, "+77071112233")
         self.assertEqual(order.delivery_phone, "+77071112233")
         self.assertEqual(order.checkout_step, "awaiting_time")
-        self.assertIn("Шаг 3 из 4", res_phone)
+        self.assertIn("Шаг 3 из 5", res_phone)
 
         # 4. Шаг 3: Ввод Времени
         res_time = process_checkout_step(self.db, order, "Сегодня к 19:00")
         self.assertEqual(order.delivery_time, "Сегодня к 19:00")
-        self.assertEqual(order.checkout_step, "awaiting_address")
-        self.assertIn("Шаг 4 из 4", res_time)
+        self.assertEqual(order.checkout_step, "awaiting_card_text")
+        self.assertIn("Шаг 4 из 5", res_time)
 
-        # 5. Шаг 4: Ввод Адреса
+        # 5. Шаг 4: Ввод Текста открытки
+        res_card = process_checkout_step(self.db, order, "С Днем Рождения!")
+        self.assertEqual(order.card_text, "С Днем Рождения!")
+        self.assertEqual(order.checkout_step, "awaiting_address")
+        self.assertIn("Шаг 5 из 5", res_card)
+
+        # 6. Шаг 5: Ввод Адреса
         res_addr = process_checkout_step(self.db, order, "г. Алматы, пр. Абая 150")
         self.assertEqual(order.delivery_address, "г. Алматы, пр. Абая 150")
         self.assertIn(order.checkout_step, ("awaiting_payment", "awaiting_payment_confirmation"))
@@ -130,6 +136,7 @@ class TestOrderCheckoutFlow(unittest.TestCase):
         process_checkout_step(self.db, order, "Алексей")
         process_checkout_step(self.db, order, "+77071112233")
         process_checkout_step(self.db, order, "Завтра в 12:00")
+        process_checkout_step(self.db, order, "С любовью!")
         process_checkout_step(self.db, order, "ул. Достык 50, кв 12")
 
         self.assertEqual(self.product.stock, 10)  # Списание происходит при подтверждении оплаты
@@ -164,40 +171,46 @@ class TestOrderCheckoutFlow(unittest.TestCase):
         resp1 = process_unified_message(business_id=1, payload=payload1, db=self.db)
 
         self.assertTrue(resp1.order_created)
-        self.assertIn("Шаг 1 из 4", resp1.reply)
+        self.assertIn("Шаг 1 из 5", resp1.reply)
         order_id = resp1.order_details.order_id
 
         # 2. Второй запрос (клиент вводит имя)
         payload2 = WebhookIncomingMessage(phone_number=phone, message="Динара")
         resp2 = process_unified_message(business_id=1, payload=payload2, db=self.db)
-        self.assertIn("Шаг 2 из 4", resp2.reply)
+        self.assertIn("Шаг 2 из 5", resp2.reply)
         self.assertIn("Динара", resp2.reply)
 
         # 3. Третий запрос (клиент вводит телефон)
         payload3 = WebhookIncomingMessage(phone_number=phone, message="+77019998877")
         resp3 = process_unified_message(business_id=1, payload=payload3, db=self.db)
-        self.assertIn("Шаг 3 из 4", resp3.reply)
+        self.assertIn("Шаг 3 из 5", resp3.reply)
 
         # 4. Четвертый запрос (время)
         payload4 = WebhookIncomingMessage(phone_number=phone, message="Сегодня к 15:00")
         resp4 = process_unified_message(business_id=1, payload=payload4, db=self.db)
-        self.assertIn("Шаг 4 из 4", resp4.reply)
+        self.assertIn("Шаг 4 из 5", resp4.reply)
 
-        # 5. Пятый запрос (адрес)
-        payload5 = WebhookIncomingMessage(phone_number=phone, message="мкр. Самал-2, д 15")
+        # 5. Пятый запрос (открытка)
+        payload5 = WebhookIncomingMessage(phone_number=phone, message="С Днем Рождения, мама!")
         resp5 = process_unified_message(business_id=1, payload=payload5, db=self.db)
-        self.assertIn("Реквизиты для оплаты", resp5.reply)
-        self.assertIn("успешно сформирован", resp5.reply)
+        self.assertIn("Шаг 5 из 5", resp5.reply)
 
-        # 6. Проверяем состояние заказа в БД
+        # 6. Шестой запрос (адрес)
+        payload6 = WebhookIncomingMessage(phone_number=phone, message="мкр. Самал-2, д 15")
+        resp6 = process_unified_message(business_id=1, payload=payload6, db=self.db)
+        self.assertIn("Реквизиты для оплаты", resp6.reply)
+        self.assertIn("успешно сформирован", resp6.reply)
+
+        # 7. Проверяем состояние заказа в БД
         order_db = self.db.query(Order).filter(Order.id == order_id).first()
         self.assertEqual(order_db.delivery_name, "Динара")
         self.assertEqual(order_db.delivery_phone, "+77019998877")
         self.assertEqual(order_db.delivery_time, "Сегодня к 15:00")
+        self.assertEqual(order_db.card_text, "С Днем Рождения, мама!")
         self.assertEqual(order_db.delivery_address, "мкр. Самал-2, д 15")
         self.assertFalse(order_db.is_paid)
 
-        # 7. Подтверждаем оплату через функцию подтверждения оплаты
+        # 8. Подтверждаем оплату через функцию подтверждения оплаты
         pay_res = confirm_order_payment(db=self.db, order_id=order_id, shop_id=1)
         self.assertTrue(pay_res.success)
         self.assertTrue(order_db.is_paid)

@@ -868,3 +868,804 @@ NoneType: None
   File "C:\Users\User\Desktop\Sanaq AI\main.py", line 288, in chat_with_ai
     POST /chat
 2026-08-30 22:23:19 - httpx2 - INFO - HTTP Request: POST http://testserver/chat "HTTP/1.1 422 Unprocessable Content"
+2026-08-31 11:12:24 - messengers_router - INFO - Верификация Meta токена для Instagram Direct: УСПЕХ
+2026-08-31 11:12:24 - httpx2 - INFO - HTTP Request: GET http://testserver/webhook/instagram?hub.mode=subscribe&hub.verify_token=sanaq_ai_verify_token&hub.challenge=123456789 "HTTP/1.1 200 OK"
+2026-08-31 11:12:24 - messengers_router - INFO - Верификация WhatsApp вебхука успешно пройдена.
+2026-08-31 11:12:24 - httpx2 - INFO - HTTP Request: GET http://testserver/webhook/whatsapp?hub.mode=subscribe&hub.verify_token=sanaq_ai_verify_token&hub.challenge=987654321 "HTTP/1.1 200 OK"
+2026-08-31 11:12:24 - ai_service - INFO - Язык сообщения: ru | Модель: gpt-4o-mini | Бизнес/Shop ID: 1
+2026-08-31 11:12:24 - ai_service - INFO - Успешный ответ от OpenAI (длина: 71 символов)
+2026-08-31 11:12:24 - httpx2 - INFO - HTTP Request: POST http://testserver/webhook/whatsapp "HTTP/1.1 200 OK"
+2026-08-31 11:12:24 - ai_service - INFO - Язык сообщения: ru | Модель: gpt-4o-mini | Бизнес/Shop ID: 1
+2026-08-31 11:12:24 - ai_service - INFO - Успешный ответ от OpenAI (длина: 51 символов)
+2026-08-31 11:12:24 - httpx2 - INFO - HTTP Request: POST http://testserver/webhook/instagram "HTTP/1.1 200 OK"
+2026-08-31 11:12:24 - messengers_router - INFO - WhatsApp сообщение успешно отправлено на 77071112233
+2026-08-31 11:12:24 - messengers_router - INFO - Instagram DM успешно отправлено на sender_id=INSTA_123
+2026-08-31 11:12:24 - messengers_router - INFO - Telegram сообщение успешно отправлено на chat_id=888777666
+2026-08-31 11:12:24 - ai_service - INFO - Язык сообщения: ru | Модель: gpt-4o-mini | Бизнес/Shop ID: 1
+2026-08-31 11:12:24 - ai_service - INFO - Успешный ответ от OpenAI (длина: 60 символов)
+2026-08-31 11:12:24 - httpx2 - INFO - HTTP Request: POST http://testserver/webhook/telegram "HTTP/1.1 200 OK"
+2026-08-31 11:12:24 - messengers_router - INFO - ✅ Telegram setWebhook успешно зарегистрирован: https://sanaq-ai.example.com/webhook/telegram
+2026-08-31 11:12:33 - ai_service - INFO - Язык сообщения: kk | Модель: gpt-4o-mini | Бизнес/Shop ID: 1
+2026-08-31 11:12:33 - ai_service - WARNING - [Попытка 1/2] Ошибка соединения с OpenAI API (https://api.openai.com/v1/chat/completions). Бизнес ID: 1 | Ошибка: Connection refused
+Traceback (most recent call last):
+  File "C:\Users\User\Desktop\Sanaq AI\ai_service.py", line 544, in get_ai_response_with_intent
+    response = requests.post(
+        url,
+    ...<2 lines>...
+        timeout=60,
+    )
+  File "C:\Users\User\AppData\Local\Programs\Python\Python314\Lib\unittest\mock.py", line 1176, in __call__
+    return self._mock_call(*args, **kwargs)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Users\User\AppData\Local\Programs\Python\Python314\Lib\unittest\mock.py", line 1180, in _mock_call
+    return self._execute_mock_call(*args, **kwargs)
+           ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Users\User\AppData\Local\Programs\Python\Python314\Lib\unittest\mock.py", line 1241, in _execute_mock_call
+    raise effect
+requests.exceptions.ConnectionError: Connection refused
+2026-08-31 11:12:35 - ai_service - WARNING - [Попытка 2/2] Ошибка соединения с OpenAI API (https://api.openai.com/v1/chat/completions). Бизнес ID: 1 | Ошибка: Connection refused
+Traceback (most recent call last):
+  File "C:\Users\User\Desktop\Sanaq AI\ai_service.py", line 544, in get_ai_response_with_intent
+    response = requests.post(
+        url,
+    ...<2 lines>...
+        timeout=60,
+    )
+  File "C:\Users\User\AppData\Local\Programs\Python\Python314\Lib\unittest\mock.py", line 1176, in __call__
+    return self._mock_call(*args, **kwargs)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Users\User\AppData\Local\Programs\Python\Python314\Lib\unittest\mock.py", line 1180, in _mock_call
+    return self._execute_mock_call(*args, **kwargs)
+           ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Users\User\AppData\Local\Programs\Python\Python314\Lib\unittest\mock.py", line 1241, in _execute_mock_call
+    raise effect
+  File "C:\Users\User\Desktop\Sanaq AI\ai_service.py", line 544, in get_ai_response_with_intent
+    response = requests.post(
+        url,
+    ...<2 lines>...
+        timeout=60,
+    )
+  File "C:\Users\User\AppData\Local\Programs\Python\Python314\Lib\unittest\mock.py", line 1176, in __call__
+    return self._mock_call(*args, **kwargs)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Users\User\AppData\Local\Programs\Python\Python314\Lib\unittest\mock.py", line 1180, in _mock_call
+    return self._execute_mock_call(*args, **kwargs)
+           ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Users\User\AppData\Local\Programs\Python\Python314\Lib\unittest\mock.py", line 1241, in _execute_mock_call
+    raise effect
+requests.exceptions.ConnectionError: Connection refused
+2026-08-31 11:12:35 - ai_service - ERROR - ВСЕ ПОПЫТКИ ИСЧЕРПАНЫ (2): запрос к OpenAI API не удался. Бизнес ID: 1 | Последняя ошибка: Connection refused
+NoneType: None
+2026-08-31 11:12:35 - ai_service - INFO - Язык сообщения: ru | Модель: gpt-4o-mini | Бизнес/Shop ID: 1
+2026-08-31 11:12:35 - ai_service - WARNING - [Попытка 1/2] RateLimitError (HTTP 429) от API. Retry-After: 1 | URL: https://api.openai.com/v1/chat/completions
+2026-08-31 11:12:36 - ai_service - WARNING - [Попытка 2/2] RateLimitError (HTTP 429) от API. Retry-After: 1 | URL: https://api.openai.com/v1/chat/completions
+2026-08-31 11:12:36 - ai_service - ERROR - RATE LIMIT ИСЧЕРПАН: OpenAI API вернул 429 после 2 попыток. Бизнес ID: 1 | Модель: gpt-4o-mini | URL: https://api.openai.com/v1/chat/completions
+2026-08-31 11:12:36 - ai_service - INFO - Язык сообщения: ru | Модель: gpt-4o-mini | Бизнес/Shop ID: 1
+2026-08-31 11:12:36 - ai_service - WARNING - [Попытка 1/2] Таймаут запроса к OpenAI API (https://api.openai.com/v1/chat/completions). Бизнес ID: 1
+Traceback (most recent call last):
+  File "C:\Users\User\Desktop\Sanaq AI\ai_service.py", line 544, in get_ai_response_with_intent
+    response = requests.post(
+        url,
+    ...<2 lines>...
+        timeout=60,
+    )
+  File "C:\Users\User\AppData\Local\Programs\Python\Python314\Lib\unittest\mock.py", line 1176, in __call__
+    return self._mock_call(*args, **kwargs)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Users\User\AppData\Local\Programs\Python\Python314\Lib\unittest\mock.py", line 1180, in _mock_call
+    return self._execute_mock_call(*args, **kwargs)
+           ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Users\User\AppData\Local\Programs\Python\Python314\Lib\unittest\mock.py", line 1241, in _execute_mock_call
+    raise effect
+requests.exceptions.Timeout: Read timeout
+2026-08-31 11:12:37 - ai_service - WARNING - [Попытка 2/2] Таймаут запроса к OpenAI API (https://api.openai.com/v1/chat/completions). Бизнес ID: 1
+Traceback (most recent call last):
+  File "C:\Users\User\Desktop\Sanaq AI\ai_service.py", line 544, in get_ai_response_with_intent
+    response = requests.post(
+        url,
+    ...<2 lines>...
+        timeout=60,
+    )
+  File "C:\Users\User\AppData\Local\Programs\Python\Python314\Lib\unittest\mock.py", line 1176, in __call__
+    return self._mock_call(*args, **kwargs)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Users\User\AppData\Local\Programs\Python\Python314\Lib\unittest\mock.py", line 1180, in _mock_call
+    return self._execute_mock_call(*args, **kwargs)
+           ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Users\User\AppData\Local\Programs\Python\Python314\Lib\unittest\mock.py", line 1241, in _execute_mock_call
+    raise effect
+  File "C:\Users\User\Desktop\Sanaq AI\ai_service.py", line 544, in get_ai_response_with_intent
+    response = requests.post(
+        url,
+    ...<2 lines>...
+        timeout=60,
+    )
+  File "C:\Users\User\AppData\Local\Programs\Python\Python314\Lib\unittest\mock.py", line 1176, in __call__
+    return self._mock_call(*args, **kwargs)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Users\User\AppData\Local\Programs\Python\Python314\Lib\unittest\mock.py", line 1180, in _mock_call
+    return self._execute_mock_call(*args, **kwargs)
+           ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Users\User\AppData\Local\Programs\Python\Python314\Lib\unittest\mock.py", line 1241, in _execute_mock_call
+    raise effect
+requests.exceptions.Timeout: Read timeout
+2026-08-31 11:12:37 - ai_service - ERROR - ВСЕ ПОПЫТКИ ИСЧЕРПАНЫ (2): запрос к OpenAI API не удался. Бизнес ID: 1 | Последняя ошибка: Read timeout
+NoneType: None
+2026-08-31 11:12:37 - sanaq_ai - WARNING - Ошибка валидации входящего JSON [HTTP 422] (POST /orders): 1 validation error:
+  {'type': 'value_error', 'loc': ('body', 'items', 0, 'quantity'), 'msg': 'Value error, Количество (quantity) должно быть больше нуля, получено: 0', 'input': 0, 'ctx': {'error': ValueError('Количество (quantity) должно быть больше нуля, получено: 0')}}
+
+  File "C:\Users\User\Desktop\Sanaq AI\main.py", line 369, in api_create_order
+    POST /orders
+2026-08-31 11:12:37 - httpx2 - INFO - HTTP Request: POST http://testserver/orders "HTTP/1.1 422 Unprocessable Content"
+2026-08-31 11:12:37 - sanaq_ai - WARNING - Ошибка валидации входящего JSON [HTTP 422] (POST /chat): 1 validation error:
+  {'type': 'json_invalid', 'loc': ('body', 36), 'msg': 'JSON decode error', 'input': {}, 'ctx': {'error': 'Expecting property name enclosed in double quotes'}}
+
+  File "C:\Users\User\Desktop\Sanaq AI\main.py", line 288, in chat_with_ai
+    POST /chat
+2026-08-31 11:12:37 - httpx2 - INFO - HTTP Request: POST http://testserver/chat "HTTP/1.1 422 Unprocessable Content"
+2026-08-31 11:12:48 - ai_service - INFO - Успешно извлечен артикул со скриншота: Арт. 12
+2026-08-31 11:12:48 - ai_service - INFO - Артикул на скриншоте не обнаружен.
+2026-08-31 11:12:48 - ai_service - INFO - Голосовое сообщение успешно расшифровано: 'Здравствуйте, хочу заказать роз 15 штук'
+2026-08-31 11:12:48 - ai_service - INFO - Язык сообщения: ru | Модель: gpt-4o-mini | Бизнес/Shop ID: 99
+2026-08-31 11:12:48 - ai_service - INFO - Успешный ответ от OpenAI (длина: 67 символов)
+2026-08-31 11:12:48 - httpx2 - INFO - HTTP Request: POST http://testserver/webhook/99 "HTTP/1.1 200 OK"
+2026-08-31 11:18:07 - messengers_router - INFO - Верификация Meta токена для Instagram Direct: УСПЕХ
+2026-08-31 11:18:07 - httpx2 - INFO - HTTP Request: GET http://testserver/webhook/instagram?hub.mode=subscribe&hub.verify_token=sanaq_ai_verify_token&hub.challenge=123456789 "HTTP/1.1 200 OK"
+2026-08-31 11:18:07 - messengers_router - INFO - Верификация WhatsApp вебхука успешно пройдена.
+2026-08-31 11:18:07 - httpx2 - INFO - HTTP Request: GET http://testserver/webhook/whatsapp?hub.mode=subscribe&hub.verify_token=sanaq_ai_verify_token&hub.challenge=987654321 "HTTP/1.1 200 OK"
+2026-08-31 11:18:07 - ai_service - INFO - Язык сообщения: ru | Модель: gpt-4o-mini | Бизнес/Shop ID: 1
+2026-08-31 11:18:07 - ai_service - INFO - Успешный ответ от OpenAI (длина: 71 символов)
+2026-08-31 11:18:07 - httpx2 - INFO - HTTP Request: POST http://testserver/webhook/whatsapp "HTTP/1.1 200 OK"
+2026-08-31 11:18:08 - ai_service - INFO - Язык сообщения: ru | Модель: gpt-4o-mini | Бизнес/Shop ID: 1
+2026-08-31 11:18:08 - ai_service - INFO - Успешный ответ от OpenAI (длина: 51 символов)
+2026-08-31 11:18:08 - httpx2 - INFO - HTTP Request: POST http://testserver/webhook/instagram "HTTP/1.1 200 OK"
+2026-08-31 11:18:08 - messengers_router - INFO - WhatsApp сообщение успешно отправлено на 77071112233
+2026-08-31 11:18:08 - messengers_router - INFO - Instagram DM успешно отправлено на sender_id=INSTA_123
+2026-08-31 11:18:08 - messengers_router - INFO - Telegram сообщение успешно отправлено на chat_id=888777666
+2026-08-31 11:18:08 - ai_service - INFO - Язык сообщения: ru | Модель: gpt-4o-mini | Бизнес/Shop ID: 1
+2026-08-31 11:18:08 - ai_service - INFO - Успешный ответ от OpenAI (длина: 60 символов)
+2026-08-31 11:18:08 - httpx2 - INFO - HTTP Request: POST http://testserver/webhook/telegram "HTTP/1.1 200 OK"
+2026-08-31 11:18:08 - messengers_router - INFO - ✅ Telegram setWebhook успешно зарегистрирован: https://sanaq-ai.example.com/webhook/telegram
+2026-09-04 21:35:35 - ai_service - INFO - Успешно извлечен артикул со скриншота: Арт. 12
+2026-09-04 21:35:35 - ai_service - INFO - Артикул на скриншоте не обнаружен.
+2026-09-04 21:35:35 - ai_service - INFO - Голосовое сообщение успешно расшифровано: 'Здравствуйте, хочу заказать роз 15 штук'
+2026-09-04 21:35:35 - ai_service - INFO - Язык сообщения: ru | Модель: gpt-5.6-luna | Бизнес/Shop ID: 99
+2026-09-04 21:35:35 - ai_service - INFO - Успешный ответ от OpenAI (длина: 67 символов)
+2026-09-04 21:35:35 - httpx2 - INFO - HTTP Request: POST http://testserver/webhook/99 "HTTP/1.1 200 OK"
+2026-09-04 21:39:42 - messengers_router - INFO - Верификация Meta токена для Instagram Direct: УСПЕХ
+2026-09-04 21:39:42 - httpx2 - INFO - HTTP Request: GET http://testserver/webhook/instagram?hub.mode=subscribe&hub.verify_token=sanaq_ai_verify_token&hub.challenge=123456789 "HTTP/1.1 200 OK"
+2026-09-04 21:39:42 - messengers_router - INFO - Верификация WhatsApp вебхука успешно пройдена.
+2026-09-04 21:39:42 - httpx2 - INFO - HTTP Request: GET http://testserver/webhook/whatsapp?hub.mode=subscribe&hub.verify_token=sanaq_ai_verify_token&hub.challenge=987654321 "HTTP/1.1 200 OK"
+2026-09-04 21:39:42 - ai_service - INFO - Язык сообщения: ru | Модель: gpt-5.6-luna | Бизнес/Shop ID: 1
+2026-09-04 21:39:42 - ai_service - INFO - Успешный ответ от OpenAI (длина: 71 символов)
+2026-09-04 21:39:42 - httpx2 - INFO - HTTP Request: POST http://testserver/webhook/whatsapp "HTTP/1.1 200 OK"
+2026-09-04 21:39:42 - ai_service - INFO - Язык сообщения: ru | Модель: gpt-5.6-luna | Бизнес/Shop ID: 1
+2026-09-04 21:39:42 - ai_service - INFO - Успешный ответ от OpenAI (длина: 51 символов)
+2026-09-04 21:39:42 - httpx2 - INFO - HTTP Request: POST http://testserver/webhook/instagram "HTTP/1.1 200 OK"
+2026-09-04 21:39:42 - messengers_router - INFO - WhatsApp сообщение успешно отправлено на 77071112233
+2026-09-04 21:39:42 - messengers_router - INFO - Instagram DM успешно отправлено на sender_id=INSTA_123
+2026-09-04 21:39:42 - messengers_router - INFO - Telegram сообщение успешно отправлено на chat_id=888777666
+2026-09-04 21:39:42 - ai_service - INFO - Язык сообщения: ru | Модель: gpt-5.6-luna | Бизнес/Shop ID: 1
+2026-09-04 21:39:42 - ai_service - INFO - Успешный ответ от OpenAI (длина: 60 символов)
+2026-09-04 21:39:42 - httpx2 - INFO - HTTP Request: POST http://testserver/webhook/telegram "HTTP/1.1 200 OK"
+2026-09-04 21:39:42 - messengers_router - INFO - ✅ Telegram setWebhook успешно зарегистрирован: https://sanaq-ai.example.com/webhook/telegram
+2026-09-04 21:40:21 - ai_service - INFO - Язык сообщения: kk | Модель: gpt-5.6-luna | Бизнес/Shop ID: 1
+2026-09-04 21:40:21 - ai_service - WARNING - [Попытка 1/2] Ошибка соединения с OpenAI API (https://api.openai.com/v1/chat/completions). Бизнес ID: 1 | Ошибка: Connection refused
+Traceback (most recent call last):
+  File "C:\Users\User\Desktop\Sanaq AI\ai_service.py", line 544, in get_ai_response_with_intent
+    response = requests.post(
+        url,
+    ...<2 lines>...
+        timeout=60,
+    )
+  File "C:\Users\User\AppData\Local\Programs\Python\Python314\Lib\unittest\mock.py", line 1176, in __call__
+    return self._mock_call(*args, **kwargs)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Users\User\AppData\Local\Programs\Python\Python314\Lib\unittest\mock.py", line 1180, in _mock_call
+    return self._execute_mock_call(*args, **kwargs)
+           ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Users\User\AppData\Local\Programs\Python\Python314\Lib\unittest\mock.py", line 1241, in _execute_mock_call
+    raise effect
+requests.exceptions.ConnectionError: Connection refused
+2026-09-04 21:40:22 - ai_service - WARNING - [Попытка 2/2] Ошибка соединения с OpenAI API (https://api.openai.com/v1/chat/completions). Бизнес ID: 1 | Ошибка: Connection refused
+Traceback (most recent call last):
+  File "C:\Users\User\Desktop\Sanaq AI\ai_service.py", line 544, in get_ai_response_with_intent
+    response = requests.post(
+        url,
+    ...<2 lines>...
+        timeout=60,
+    )
+  File "C:\Users\User\AppData\Local\Programs\Python\Python314\Lib\unittest\mock.py", line 1176, in __call__
+    return self._mock_call(*args, **kwargs)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Users\User\AppData\Local\Programs\Python\Python314\Lib\unittest\mock.py", line 1180, in _mock_call
+    return self._execute_mock_call(*args, **kwargs)
+           ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Users\User\AppData\Local\Programs\Python\Python314\Lib\unittest\mock.py", line 1241, in _execute_mock_call
+    raise effect
+  File "C:\Users\User\Desktop\Sanaq AI\ai_service.py", line 544, in get_ai_response_with_intent
+    response = requests.post(
+        url,
+    ...<2 lines>...
+        timeout=60,
+    )
+  File "C:\Users\User\AppData\Local\Programs\Python\Python314\Lib\unittest\mock.py", line 1176, in __call__
+    return self._mock_call(*args, **kwargs)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Users\User\AppData\Local\Programs\Python\Python314\Lib\unittest\mock.py", line 1180, in _mock_call
+    return self._execute_mock_call(*args, **kwargs)
+           ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Users\User\AppData\Local\Programs\Python\Python314\Lib\unittest\mock.py", line 1241, in _execute_mock_call
+    raise effect
+requests.exceptions.ConnectionError: Connection refused
+2026-09-04 21:40:22 - ai_service - ERROR - ВСЕ ПОПЫТКИ ИСЧЕРПАНЫ (2): запрос к OpenAI API не удался. Бизнес ID: 1 | Последняя ошибка: Connection refused
+NoneType: None
+2026-09-04 21:40:22 - ai_service - INFO - Язык сообщения: ru | Модель: gpt-5.6-luna | Бизнес/Shop ID: 1
+2026-09-04 21:40:22 - ai_service - WARNING - [Попытка 1/2] RateLimitError (HTTP 429) от API. Retry-After: 1 | URL: https://api.openai.com/v1/chat/completions
+2026-09-04 21:40:23 - ai_service - WARNING - [Попытка 2/2] RateLimitError (HTTP 429) от API. Retry-After: 1 | URL: https://api.openai.com/v1/chat/completions
+2026-09-04 21:40:23 - ai_service - ERROR - RATE LIMIT ИСЧЕРПАН: OpenAI API вернул 429 после 2 попыток. Бизнес ID: 1 | Модель: gpt-5.6-luna | URL: https://api.openai.com/v1/chat/completions
+2026-09-04 21:40:23 - ai_service - INFO - Язык сообщения: ru | Модель: gpt-5.6-luna | Бизнес/Shop ID: 1
+2026-09-04 21:40:23 - ai_service - WARNING - [Попытка 1/2] Таймаут запроса к OpenAI API (https://api.openai.com/v1/chat/completions). Бизнес ID: 1
+Traceback (most recent call last):
+  File "C:\Users\User\Desktop\Sanaq AI\ai_service.py", line 544, in get_ai_response_with_intent
+    response = requests.post(
+        url,
+    ...<2 lines>...
+        timeout=60,
+    )
+  File "C:\Users\User\AppData\Local\Programs\Python\Python314\Lib\unittest\mock.py", line 1176, in __call__
+    return self._mock_call(*args, **kwargs)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Users\User\AppData\Local\Programs\Python\Python314\Lib\unittest\mock.py", line 1180, in _mock_call
+    return self._execute_mock_call(*args, **kwargs)
+           ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Users\User\AppData\Local\Programs\Python\Python314\Lib\unittest\mock.py", line 1241, in _execute_mock_call
+    raise effect
+requests.exceptions.Timeout: Read timeout
+2026-09-04 21:40:25 - ai_service - WARNING - [Попытка 2/2] Таймаут запроса к OpenAI API (https://api.openai.com/v1/chat/completions). Бизнес ID: 1
+Traceback (most recent call last):
+  File "C:\Users\User\Desktop\Sanaq AI\ai_service.py", line 544, in get_ai_response_with_intent
+    response = requests.post(
+        url,
+    ...<2 lines>...
+        timeout=60,
+    )
+  File "C:\Users\User\AppData\Local\Programs\Python\Python314\Lib\unittest\mock.py", line 1176, in __call__
+    return self._mock_call(*args, **kwargs)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Users\User\AppData\Local\Programs\Python\Python314\Lib\unittest\mock.py", line 1180, in _mock_call
+    return self._execute_mock_call(*args, **kwargs)
+           ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Users\User\AppData\Local\Programs\Python\Python314\Lib\unittest\mock.py", line 1241, in _execute_mock_call
+    raise effect
+  File "C:\Users\User\Desktop\Sanaq AI\ai_service.py", line 544, in get_ai_response_with_intent
+    response = requests.post(
+        url,
+    ...<2 lines>...
+        timeout=60,
+    )
+  File "C:\Users\User\AppData\Local\Programs\Python\Python314\Lib\unittest\mock.py", line 1176, in __call__
+    return self._mock_call(*args, **kwargs)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Users\User\AppData\Local\Programs\Python\Python314\Lib\unittest\mock.py", line 1180, in _mock_call
+    return self._execute_mock_call(*args, **kwargs)
+           ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Users\User\AppData\Local\Programs\Python\Python314\Lib\unittest\mock.py", line 1241, in _execute_mock_call
+    raise effect
+requests.exceptions.Timeout: Read timeout
+2026-09-04 21:40:25 - ai_service - ERROR - ВСЕ ПОПЫТКИ ИСЧЕРПАНЫ (2): запрос к OpenAI API не удался. Бизнес ID: 1 | Последняя ошибка: Read timeout
+NoneType: None
+2026-09-04 21:40:25 - sanaq_ai - WARNING - Ошибка валидации входящего JSON [HTTP 422] (POST /orders): 1 validation error:
+  {'type': 'value_error', 'loc': ('body', 'items', 0, 'quantity'), 'msg': 'Value error, Количество (quantity) должно быть больше нуля, получено: 0', 'input': 0, 'ctx': {'error': ValueError('Количество (quantity) должно быть больше нуля, получено: 0')}}
+
+  File "C:\Users\User\Desktop\Sanaq AI\main.py", line 369, in api_create_order
+    POST /orders
+2026-09-04 21:40:25 - httpx2 - INFO - HTTP Request: POST http://testserver/orders "HTTP/1.1 422 Unprocessable Content"
+2026-09-04 21:40:25 - sanaq_ai - WARNING - Ошибка валидации входящего JSON [HTTP 422] (POST /chat): 1 validation error:
+  {'type': 'json_invalid', 'loc': ('body', 36), 'msg': 'JSON decode error', 'input': {}, 'ctx': {'error': 'Expecting property name enclosed in double quotes'}}
+
+  File "C:\Users\User\Desktop\Sanaq AI\main.py", line 288, in chat_with_ai
+    POST /chat
+2026-09-04 21:40:25 - httpx2 - INFO - HTTP Request: POST http://testserver/chat "HTTP/1.1 422 Unprocessable Content"
+2026-09-04 22:14:13 - ai_service - INFO - Язык сообщения: kk | Модель: gpt-5.6-luna | Бизнес/Shop ID: 1
+2026-09-04 22:14:13 - ai_service - WARNING - [Попытка 1/2] Ошибка соединения с OpenAI API (https://api.openai.com/v1/chat/completions). Бизнес ID: 1 | Ошибка: Connection refused
+Traceback (most recent call last):
+  File "C:\Users\User\Desktop\Sanaq AI\ai_service.py", line 544, in get_ai_response_with_intent
+    response = requests.post(
+        url,
+    ...<2 lines>...
+        timeout=60,
+    )
+  File "C:\Users\User\AppData\Local\Programs\Python\Python314\Lib\unittest\mock.py", line 1176, in __call__
+    return self._mock_call(*args, **kwargs)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Users\User\AppData\Local\Programs\Python\Python314\Lib\unittest\mock.py", line 1180, in _mock_call
+    return self._execute_mock_call(*args, **kwargs)
+           ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Users\User\AppData\Local\Programs\Python\Python314\Lib\unittest\mock.py", line 1241, in _execute_mock_call
+    raise effect
+requests.exceptions.ConnectionError: Connection refused
+2026-09-04 22:14:15 - ai_service - WARNING - [Попытка 2/2] Ошибка соединения с OpenAI API (https://api.openai.com/v1/chat/completions). Бизнес ID: 1 | Ошибка: Connection refused
+Traceback (most recent call last):
+  File "C:\Users\User\Desktop\Sanaq AI\ai_service.py", line 544, in get_ai_response_with_intent
+    response = requests.post(
+        url,
+    ...<2 lines>...
+        timeout=60,
+    )
+  File "C:\Users\User\AppData\Local\Programs\Python\Python314\Lib\unittest\mock.py", line 1176, in __call__
+    return self._mock_call(*args, **kwargs)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Users\User\AppData\Local\Programs\Python\Python314\Lib\unittest\mock.py", line 1180, in _mock_call
+    return self._execute_mock_call(*args, **kwargs)
+           ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Users\User\AppData\Local\Programs\Python\Python314\Lib\unittest\mock.py", line 1241, in _execute_mock_call
+    raise effect
+  File "C:\Users\User\Desktop\Sanaq AI\ai_service.py", line 544, in get_ai_response_with_intent
+    response = requests.post(
+        url,
+    ...<2 lines>...
+        timeout=60,
+    )
+  File "C:\Users\User\AppData\Local\Programs\Python\Python314\Lib\unittest\mock.py", line 1176, in __call__
+    return self._mock_call(*args, **kwargs)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Users\User\AppData\Local\Programs\Python\Python314\Lib\unittest\mock.py", line 1180, in _mock_call
+    return self._execute_mock_call(*args, **kwargs)
+           ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Users\User\AppData\Local\Programs\Python\Python314\Lib\unittest\mock.py", line 1241, in _execute_mock_call
+    raise effect
+requests.exceptions.ConnectionError: Connection refused
+2026-09-04 22:14:15 - ai_service - ERROR - ВСЕ ПОПЫТКИ ИСЧЕРПАНЫ (2): запрос к OpenAI API не удался. Бизнес ID: 1 | Последняя ошибка: Connection refused
+NoneType: None
+2026-09-04 22:14:15 - error_notifier - ERROR - Не удалось отправить алерт об ошибке в канал -4433809117: Connection refused
+2026-09-04 22:14:15 - error_notifier - ERROR - Не удалось отправить алерт об ошибке в канал -1004433809117: Connection refused
+2026-09-04 22:14:15 - ai_service - INFO - Язык сообщения: ru | Модель: gpt-5.6-luna | Бизнес/Shop ID: 1
+2026-09-04 22:14:15 - ai_service - WARNING - [Попытка 1/2] RateLimitError (HTTP 429) от API. Retry-After: 1 | URL: https://api.openai.com/v1/chat/completions
+2026-09-04 22:14:16 - ai_service - WARNING - [Попытка 2/2] RateLimitError (HTTP 429) от API. Retry-After: 1 | URL: https://api.openai.com/v1/chat/completions
+2026-09-04 22:14:16 - ai_service - ERROR - RATE LIMIT ИСЧЕРПАН: OpenAI API вернул 429 после 2 попыток. Бизнес ID: 1 | Модель: gpt-5.6-luna | URL: https://api.openai.com/v1/chat/completions
+2026-09-04 22:14:16 - error_notifier - ERROR - Ошибка Telegram API при отправке алерта (429): <MagicMock name='post().text' id='167805344'>
+2026-09-04 22:14:16 - error_notifier - ERROR - Ошибка Telegram API при отправке алерта (429): <MagicMock name='post().text' id='167805344'>
+2026-09-04 22:14:16 - ai_service - INFO - Язык сообщения: ru | Модель: gpt-5.6-luna | Бизнес/Shop ID: 1
+2026-09-04 22:14:16 - ai_service - WARNING - [Попытка 1/2] Таймаут запроса к OpenAI API (https://api.openai.com/v1/chat/completions). Бизнес ID: 1
+Traceback (most recent call last):
+  File "C:\Users\User\Desktop\Sanaq AI\ai_service.py", line 544, in get_ai_response_with_intent
+    response = requests.post(
+        url,
+    ...<2 lines>...
+        timeout=60,
+    )
+  File "C:\Users\User\AppData\Local\Programs\Python\Python314\Lib\unittest\mock.py", line 1176, in __call__
+    return self._mock_call(*args, **kwargs)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Users\User\AppData\Local\Programs\Python\Python314\Lib\unittest\mock.py", line 1180, in _mock_call
+    return self._execute_mock_call(*args, **kwargs)
+           ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Users\User\AppData\Local\Programs\Python\Python314\Lib\unittest\mock.py", line 1241, in _execute_mock_call
+    raise effect
+requests.exceptions.Timeout: Read timeout
+2026-09-04 22:14:17 - ai_service - WARNING - [Попытка 2/2] Таймаут запроса к OpenAI API (https://api.openai.com/v1/chat/completions). Бизнес ID: 1
+Traceback (most recent call last):
+  File "C:\Users\User\Desktop\Sanaq AI\ai_service.py", line 544, in get_ai_response_with_intent
+    response = requests.post(
+        url,
+    ...<2 lines>...
+        timeout=60,
+    )
+  File "C:\Users\User\AppData\Local\Programs\Python\Python314\Lib\unittest\mock.py", line 1176, in __call__
+    return self._mock_call(*args, **kwargs)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Users\User\AppData\Local\Programs\Python\Python314\Lib\unittest\mock.py", line 1180, in _mock_call
+    return self._execute_mock_call(*args, **kwargs)
+           ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Users\User\AppData\Local\Programs\Python\Python314\Lib\unittest\mock.py", line 1241, in _execute_mock_call
+    raise effect
+  File "C:\Users\User\Desktop\Sanaq AI\ai_service.py", line 544, in get_ai_response_with_intent
+    response = requests.post(
+        url,
+    ...<2 lines>...
+        timeout=60,
+    )
+  File "C:\Users\User\AppData\Local\Programs\Python\Python314\Lib\unittest\mock.py", line 1176, in __call__
+    return self._mock_call(*args, **kwargs)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Users\User\AppData\Local\Programs\Python\Python314\Lib\unittest\mock.py", line 1180, in _mock_call
+    return self._execute_mock_call(*args, **kwargs)
+           ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Users\User\AppData\Local\Programs\Python\Python314\Lib\unittest\mock.py", line 1241, in _execute_mock_call
+    raise effect
+requests.exceptions.Timeout: Read timeout
+2026-09-04 22:14:17 - ai_service - ERROR - ВСЕ ПОПЫТКИ ИСЧЕРПАНЫ (2): запрос к OpenAI API не удался. Бизнес ID: 1 | Последняя ошибка: Read timeout
+NoneType: None
+2026-09-04 22:14:17 - error_notifier - ERROR - Не удалось отправить алерт об ошибке в канал -4433809117: Read timeout
+2026-09-04 22:14:17 - error_notifier - ERROR - Не удалось отправить алерт об ошибке в канал -1004433809117: Read timeout
+2026-09-04 22:14:17 - sanaq_ai - WARNING - Ошибка валидации входящего JSON [HTTP 422] (POST /orders): 1 validation error:
+  {'type': 'value_error', 'loc': ('body', 'items', 0, 'quantity'), 'msg': 'Value error, Количество (quantity) должно быть больше нуля, получено: 0', 'input': 0, 'ctx': {'error': ValueError('Количество (quantity) должно быть больше нуля, получено: 0')}}
+
+  File "C:\Users\User\Desktop\Sanaq AI\main.py", line 380, in api_create_order
+    POST /orders
+2026-09-04 22:14:17 - httpx2 - INFO - HTTP Request: POST http://testserver/orders "HTTP/1.1 422 Unprocessable Content"
+2026-09-04 22:14:17 - sanaq_ai - WARNING - Ошибка валидации входящего JSON [HTTP 422] (POST /chat): 1 validation error:
+  {'type': 'json_invalid', 'loc': ('body', 36), 'msg': 'JSON decode error', 'input': {}, 'ctx': {'error': 'Expecting property name enclosed in double quotes'}}
+
+  File "C:\Users\User\Desktop\Sanaq AI\main.py", line 299, in chat_with_ai
+    POST /chat
+2026-09-04 22:14:17 - httpx2 - INFO - HTTP Request: POST http://testserver/chat "HTTP/1.1 422 Unprocessable Content"
+2026-09-04 22:15:01 - messengers_router - INFO - Верификация Meta токена для Instagram Direct: УСПЕХ
+2026-09-04 22:15:01 - httpx2 - INFO - HTTP Request: GET http://testserver/webhook/instagram?hub.mode=subscribe&hub.verify_token=sanaq_ai_verify_token&hub.challenge=123456789 "HTTP/1.1 200 OK"
+2026-09-04 22:15:01 - messengers_router - INFO - Верификация WhatsApp вебхука успешно пройдена.
+2026-09-04 22:15:01 - httpx2 - INFO - HTTP Request: GET http://testserver/webhook/whatsapp?hub.mode=subscribe&hub.verify_token=sanaq_ai_verify_token&hub.challenge=987654321 "HTTP/1.1 200 OK"
+2026-09-04 22:15:01 - ai_service - INFO - Язык сообщения: ru | Модель: gpt-5.6-luna | Бизнес/Shop ID: 1
+2026-09-04 22:15:01 - ai_service - INFO - Успешный ответ от OpenAI (длина: 71 символов)
+2026-09-04 22:15:01 - httpx2 - INFO - HTTP Request: POST http://testserver/webhook/whatsapp "HTTP/1.1 200 OK"
+2026-09-04 22:15:01 - ai_service - INFO - Язык сообщения: ru | Модель: gpt-5.6-luna | Бизнес/Shop ID: 1
+2026-09-04 22:15:01 - ai_service - INFO - Успешный ответ от OpenAI (длина: 51 символов)
+2026-09-04 22:15:01 - httpx2 - INFO - HTTP Request: POST http://testserver/webhook/instagram "HTTP/1.1 200 OK"
+2026-09-04 22:15:02 - messengers_router - INFO - WhatsApp сообщение успешно отправлено на 77071112233
+2026-09-04 22:15:02 - messengers_router - INFO - Instagram DM успешно отправлено на sender_id=INSTA_123
+2026-09-04 22:15:02 - messengers_router - INFO - Telegram сообщение успешно отправлено на chat_id=888777666
+2026-09-04 22:15:02 - ai_service - INFO - Язык сообщения: ru | Модель: gpt-5.6-luna | Бизнес/Shop ID: 1
+2026-09-04 22:15:02 - ai_service - INFO - Успешный ответ от OpenAI (длина: 60 символов)
+2026-09-04 22:15:02 - httpx2 - INFO - HTTP Request: POST http://testserver/webhook/telegram "HTTP/1.1 200 OK"
+2026-09-04 22:15:02 - messengers_router - INFO - ✅ Telegram setWebhook успешно зарегистрирован: https://sanaq-ai.example.com/webhook/telegram
+2026-09-04 22:18:12 - httpx2 - INFO - HTTP Request: POST http://testserver/admin/backup "HTTP/1.1 200 OK"
+2026-09-04 22:18:12 - db_backup - INFO - Горячий бэкап SQLite БД создан успешно: test_backups\sanaq_backup_20260904_171812.db
+2026-09-04 22:18:12 - httpx2 - INFO - HTTP Request: GET http://testserver/dashboard "HTTP/1.1 200 OK"
+2026-09-04 22:18:12 - httpx2 - INFO - HTTP Request: GET http://testserver/api/dashboard/stats "HTTP/1.1 200 OK"
+2026-09-04 22:18:12 - httpx2 - INFO - HTTP Request: POST http://testserver/health/heartbeat "HTTP/1.1 200 OK"
+2026-09-04 22:18:12 - sanaq_ai - ERROR - КРИТИЧЕСКАЯ ОШИБКА СЕРВЕРА [Path: GET /payments/kaspi/999]: name 'Order' is not defined
+Traceback (most recent call last):
+  File "C:\Users\User\AppData\Local\Programs\Python\Python314\Lib\site-packages\starlette\middleware\errors.py", line 164, in __call__
+    await self.app(scope, receive, _send)
+  File "C:\Users\User\AppData\Local\Programs\Python\Python314\Lib\site-packages\starlette\middleware\cors.py", line 88, in __call__
+    await self.app(scope, receive, send)
+  File "C:\Users\User\AppData\Local\Programs\Python\Python314\Lib\site-packages\starlette\middleware\exceptions.py", line 63, in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+  File "C:\Users\User\AppData\Local\Programs\Python\Python314\Lib\site-packages\starlette\_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "C:\Users\User\AppData\Local\Programs\Python\Python314\Lib\site-packages\starlette\_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "C:\Users\User\AppData\Local\Programs\Python\Python314\Lib\site-packages\fastapi\middleware\asyncexitstack.py", line 18, in __call__
+    await self.app(scope, receive, send)
+  File "C:\Users\User\AppData\Local\Programs\Python\Python314\Lib\site-packages\starlette\routing.py", line 670, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "C:\Users\User\AppData\Local\Programs\Python\Python314\Lib\site-packages\fastapi\routing.py", line 2734, in app
+    await route.handle(scope, receive, send)
+  File "C:\Users\User\AppData\Local\Programs\Python\Python314\Lib\site-packages\fastapi\routing.py", line 1281, in handle
+    await super().handle(scope, receive, send)
+  File "C:\Users\User\AppData\Local\Programs\Python\Python314\Lib\site-packages\starlette\routing.py", line 280, in handle
+    await self.app(scope, receive, send)
+  File "C:\Users\User\AppData\Local\Programs\Python\Python314\Lib\site-packages\fastapi\routing.py", line 158, in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+  File "C:\Users\User\AppData\Local\Programs\Python\Python314\Lib\site-packages\starlette\_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "C:\Users\User\AppData\Local\Programs\Python\Python314\Lib\site-packages\starlette\_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "C:\Users\User\AppData\Local\Programs\Python\Python314\Lib\site-packages\fastapi\routing.py", line 144, in app
+    response = await f(request)
+               ^^^^^^^^^^^^^^^^
+  File "C:\Users\User\AppData\Local\Programs\Python\Python314\Lib\site-packages\fastapi\routing.py", line 706, in app
+    raw_response = await run_endpoint_function(
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<3 lines>...
+    )
+    ^
+  File "C:\Users\User\AppData\Local\Programs\Python\Python314\Lib\site-packages\fastapi\routing.py", line 354, in run_endpoint_function
+    return await run_in_threadpool(dependant.call, **values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\User\AppData\Local\Programs\Python\Python314\Lib\site-packages\starlette\concurrency.py", line 34, in run_in_threadpool
+    return await anyio.to_thread.run_sync(func)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\User\AppData\Local\Programs\Python\Python314\Lib\site-packages\anyio\to_thread.py", line 65, in run_sync
+    return await get_async_backend().run_sync_in_worker_thread(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        func, args, abandon_on_cancel=abandon_on_cancel, limiter=limiter
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\User\AppData\Local\Programs\Python\Python314\Lib\site-packages\anyio\_backends\_asyncio.py", line 2641, in run_sync_in_worker_thread
+    return await future
+           ^^^^^^^^^^^^
+  File "C:\Users\User\AppData\Local\Programs\Python\Python314\Lib\site-packages\anyio\_backends\_asyncio.py", line 1033, in run
+    result = context.run(func, *args)
+  File "C:\Users\User\Desktop\Sanaq AI\main.py", line 309, in api_get_kaspi_pay_details
+    order = db.query(Order).filter(Order.id == order_id).first()
+                     ^^^^^
+NameError: name 'Order' is not defined
+2026-09-04 22:18:13 - error_notifier - ERROR - Ошибка Telegram API при отправке алерта (400): {"ok":false,"error_code":400,"description":"Bad Request: chat not found"}
+2026-09-04 22:18:13 - error_notifier - INFO - Уведомление о критической ошибке доставлено в канал -1004433809117
+2026-09-04 22:18:14 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8806575758:AAG7yea6xLQa9dcTRBVUDZDdV6E1Q2iaers/sendMessage "HTTP/1.1 400 Bad Request"
+2026-09-04 22:18:14 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8806575758:AAG7yea6xLQa9dcTRBVUDZDdV6E1Q2iaers/sendMessage "HTTP/1.1 400 Bad Request"
+2026-09-04 22:18:14 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8806575758:AAG7yea6xLQa9dcTRBVUDZDdV6E1Q2iaers/sendMessage "HTTP/1.1 200 OK"
+2026-09-04 22:18:14 - error_notifier - INFO - Асинхронный алерт о критической ошибке доставлен в -1004433809117
+2026-09-04 22:18:14 - payments - INFO - Уведомление клиенту #1 по заказу #999 сохранено в БД: 'Оплата прошла, ваш заказ скоро будет готов.'
+2026-09-04 22:18:14 - payments - INFO - Ручная оплата заказа #999 подтверждена админом. Статус обновлен на paid.
+2026-09-04 22:18:14 - kaspi_payment - INFO - ✅ Kaspi Pay: Заказ #999 успешно автоматически оплачен! TxnID: KASPI_TXN_12345
+2026-09-04 22:18:14 - db_backup - INFO - Горячий бэкап SQLite БД создан успешно: backups\sanaq_backup_20260904_171814.db
+2026-09-04 22:18:14 - db_backup - INFO - Резервная копия БД успешно отправлена в Telegram (chat_id=-4433809117)
+2026-09-04 22:18:14 - heartbeat - INFO - Heartbeat успешно доставлен в канал -4433809117
+2026-09-04 22:18:37 - httpx2 - INFO - HTTP Request: POST http://testserver/admin/backup "HTTP/1.1 200 OK"
+2026-09-04 22:18:37 - db_backup - INFO - Горячий бэкап SQLite БД создан успешно: test_backups\sanaq_backup_20260904_171837.db
+2026-09-04 22:18:37 - httpx2 - INFO - HTTP Request: GET http://testserver/dashboard "HTTP/1.1 200 OK"
+2026-09-04 22:18:37 - httpx2 - INFO - HTTP Request: GET http://testserver/api/dashboard/stats "HTTP/1.1 200 OK"
+2026-09-04 22:18:37 - httpx2 - INFO - HTTP Request: POST http://testserver/health/heartbeat "HTTP/1.1 200 OK"
+2026-09-04 22:18:37 - httpx2 - INFO - HTTP Request: GET http://testserver/payments/kaspi/999 "HTTP/1.1 200 OK"
+2026-09-04 22:18:37 - sanaq_ai - WARNING - Ошибка валидации входящего JSON [HTTP 422] (POST /webhook/kaspi): 2 validation errors:
+  {'type': 'int_parsing', 'loc': ('path', 'business_id'), 'msg': 'Input should be a valid integer, unable to parse string as an integer', 'input': 'kaspi'}
+  {'type': 'missing', 'loc': ('body', 'phone_number'), 'msg': 'Field required', 'input': {'txn_id': 'TXN_777', 'order_id': 998, 'amount': 3500.0}}
+
+  File "C:\Users\User\AppData\Local\Programs\Python\Python314\Lib\site-packages\slowapi\extension.py", line 516, in handle_incoming_webhook
+    POST /webhook/{business_id}
+2026-09-04 22:18:37 - httpx2 - INFO - HTTP Request: POST http://testserver/webhook/kaspi "HTTP/1.1 422 Unprocessable Content"
+2026-09-04 22:18:37 - kaspi_payment - INFO - Kaspi Webhook: Заказ #999 уже отмечен как оплаченный.
+2026-09-04 22:18:37 - db_backup - INFO - Горячий бэкап SQLite БД создан успешно: backups\sanaq_backup_20260904_171837.db
+2026-09-04 22:18:37 - db_backup - INFO - Резервная копия БД успешно отправлена в Telegram (chat_id=-4433809117)
+2026-09-04 22:18:37 - heartbeat - INFO - Heartbeat успешно доставлен в канал -4433809117
+2026-09-04 22:18:46 - httpx2 - INFO - HTTP Request: POST http://testserver/admin/backup "HTTP/1.1 200 OK"
+2026-09-04 22:18:46 - db_backup - INFO - Горячий бэкап SQLite БД создан успешно: test_backups\sanaq_backup_20260904_171846.db
+2026-09-04 22:18:46 - httpx2 - INFO - HTTP Request: GET http://testserver/dashboard "HTTP/1.1 200 OK"
+2026-09-04 22:18:46 - httpx2 - INFO - HTTP Request: GET http://testserver/api/dashboard/stats "HTTP/1.1 200 OK"
+2026-09-04 22:18:46 - httpx2 - INFO - HTTP Request: POST http://testserver/health/heartbeat "HTTP/1.1 200 OK"
+2026-09-04 22:18:46 - httpx2 - INFO - HTTP Request: GET http://testserver/payments/kaspi/999 "HTTP/1.1 200 OK"
+2026-09-04 22:18:46 - payments - INFO - Уведомление клиенту #1 по заказу #998 сохранено в БД: 'Оплата прошла, ваш заказ скоро будет готов.'
+2026-09-04 22:18:46 - payments - INFO - Ручная оплата заказа #998 подтверждена админом. Статус обновлен на paid.
+2026-09-04 22:18:46 - kaspi_payment - INFO - ✅ Kaspi Pay: Заказ #998 успешно автоматически оплачен! TxnID: TXN_777
+2026-09-04 22:18:47 - httpx2 - INFO - HTTP Request: POST http://testserver/webhook/kaspi "HTTP/1.1 200 OK"
+2026-09-04 22:18:47 - kaspi_payment - INFO - Kaspi Webhook: Заказ #999 уже отмечен как оплаченный.
+2026-09-04 22:18:47 - db_backup - INFO - Горячий бэкап SQLite БД создан успешно: backups\sanaq_backup_20260904_171847.db
+2026-09-04 22:18:47 - db_backup - INFO - Резервная копия БД успешно отправлена в Telegram (chat_id=-4433809117)
+2026-09-04 22:18:47 - heartbeat - INFO - Heartbeat успешно доставлен в канал -4433809117
+2026-09-04 22:18:51 - ai_service - INFO - Язык сообщения: kk | Модель: gpt-5.6-luna | Бизнес/Shop ID: 1
+2026-09-04 22:18:51 - ai_service - WARNING - [Попытка 1/2] Ошибка соединения с OpenAI API (https://api.openai.com/v1/chat/completions). Бизнес ID: 1 | Ошибка: Connection refused
+Traceback (most recent call last):
+  File "C:\Users\User\Desktop\Sanaq AI\ai_service.py", line 544, in get_ai_response_with_intent
+    response = requests.post(
+        url,
+    ...<2 lines>...
+        timeout=60,
+    )
+  File "C:\Users\User\AppData\Local\Programs\Python\Python314\Lib\unittest\mock.py", line 1176, in __call__
+    return self._mock_call(*args, **kwargs)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Users\User\AppData\Local\Programs\Python\Python314\Lib\unittest\mock.py", line 1180, in _mock_call
+    return self._execute_mock_call(*args, **kwargs)
+           ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Users\User\AppData\Local\Programs\Python\Python314\Lib\unittest\mock.py", line 1241, in _execute_mock_call
+    raise effect
+requests.exceptions.ConnectionError: Connection refused
+2026-09-04 22:18:52 - ai_service - WARNING - [Попытка 2/2] Ошибка соединения с OpenAI API (https://api.openai.com/v1/chat/completions). Бизнес ID: 1 | Ошибка: Connection refused
+Traceback (most recent call last):
+  File "C:\Users\User\Desktop\Sanaq AI\ai_service.py", line 544, in get_ai_response_with_intent
+    response = requests.post(
+        url,
+    ...<2 lines>...
+        timeout=60,
+    )
+  File "C:\Users\User\AppData\Local\Programs\Python\Python314\Lib\unittest\mock.py", line 1176, in __call__
+    return self._mock_call(*args, **kwargs)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Users\User\AppData\Local\Programs\Python\Python314\Lib\unittest\mock.py", line 1180, in _mock_call
+    return self._execute_mock_call(*args, **kwargs)
+           ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Users\User\AppData\Local\Programs\Python\Python314\Lib\unittest\mock.py", line 1241, in _execute_mock_call
+    raise effect
+  File "C:\Users\User\Desktop\Sanaq AI\ai_service.py", line 544, in get_ai_response_with_intent
+    response = requests.post(
+        url,
+    ...<2 lines>...
+        timeout=60,
+    )
+  File "C:\Users\User\AppData\Local\Programs\Python\Python314\Lib\unittest\mock.py", line 1176, in __call__
+    return self._mock_call(*args, **kwargs)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Users\User\AppData\Local\Programs\Python\Python314\Lib\unittest\mock.py", line 1180, in _mock_call
+    return self._execute_mock_call(*args, **kwargs)
+           ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Users\User\AppData\Local\Programs\Python\Python314\Lib\unittest\mock.py", line 1241, in _execute_mock_call
+    raise effect
+requests.exceptions.ConnectionError: Connection refused
+2026-09-04 22:18:52 - ai_service - ERROR - ВСЕ ПОПЫТКИ ИСЧЕРПАНЫ (2): запрос к OpenAI API не удался. Бизнес ID: 1 | Последняя ошибка: Connection refused
+NoneType: None
+2026-09-04 22:18:52 - error_notifier - ERROR - Не удалось отправить алерт об ошибке в канал -4433809117: Connection refused
+2026-09-04 22:18:52 - error_notifier - ERROR - Не удалось отправить алерт об ошибке в канал -1004433809117: Connection refused
+2026-09-04 22:18:52 - ai_service - INFO - Язык сообщения: ru | Модель: gpt-5.6-luna | Бизнес/Shop ID: 1
+2026-09-04 22:18:52 - ai_service - WARNING - [Попытка 1/2] RateLimitError (HTTP 429) от API. Retry-After: 1 | URL: https://api.openai.com/v1/chat/completions
+2026-09-04 22:18:53 - ai_service - WARNING - [Попытка 2/2] RateLimitError (HTTP 429) от API. Retry-After: 1 | URL: https://api.openai.com/v1/chat/completions
+2026-09-04 22:18:53 - ai_service - ERROR - RATE LIMIT ИСЧЕРПАН: OpenAI API вернул 429 после 2 попыток. Бизнес ID: 1 | Модель: gpt-5.6-luna | URL: https://api.openai.com/v1/chat/completions
+2026-09-04 22:18:53 - error_notifier - ERROR - Ошибка Telegram API при отправке алерта (429): <MagicMock name='post().text' id='167659232'>
+2026-09-04 22:18:53 - error_notifier - ERROR - Ошибка Telegram API при отправке алерта (429): <MagicMock name='post().text' id='167659232'>
+2026-09-04 22:18:53 - ai_service - INFO - Язык сообщения: ru | Модель: gpt-5.6-luna | Бизнес/Shop ID: 1
+2026-09-04 22:18:53 - ai_service - WARNING - [Попытка 1/2] Таймаут запроса к OpenAI API (https://api.openai.com/v1/chat/completions). Бизнес ID: 1
+Traceback (most recent call last):
+  File "C:\Users\User\Desktop\Sanaq AI\ai_service.py", line 544, in get_ai_response_with_intent
+    response = requests.post(
+        url,
+    ...<2 lines>...
+        timeout=60,
+    )
+  File "C:\Users\User\AppData\Local\Programs\Python\Python314\Lib\unittest\mock.py", line 1176, in __call__
+    return self._mock_call(*args, **kwargs)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Users\User\AppData\Local\Programs\Python\Python314\Lib\unittest\mock.py", line 1180, in _mock_call
+    return self._execute_mock_call(*args, **kwargs)
+           ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Users\User\AppData\Local\Programs\Python\Python314\Lib\unittest\mock.py", line 1241, in _execute_mock_call
+    raise effect
+requests.exceptions.Timeout: Read timeout
+2026-09-04 22:18:55 - ai_service - WARNING - [Попытка 2/2] Таймаут запроса к OpenAI API (https://api.openai.com/v1/chat/completions). Бизнес ID: 1
+Traceback (most recent call last):
+  File "C:\Users\User\Desktop\Sanaq AI\ai_service.py", line 544, in get_ai_response_with_intent
+    response = requests.post(
+        url,
+    ...<2 lines>...
+        timeout=60,
+    )
+  File "C:\Users\User\AppData\Local\Programs\Python\Python314\Lib\unittest\mock.py", line 1176, in __call__
+    return self._mock_call(*args, **kwargs)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Users\User\AppData\Local\Programs\Python\Python314\Lib\unittest\mock.py", line 1180, in _mock_call
+    return self._execute_mock_call(*args, **kwargs)
+           ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Users\User\AppData\Local\Programs\Python\Python314\Lib\unittest\mock.py", line 1241, in _execute_mock_call
+    raise effect
+  File "C:\Users\User\Desktop\Sanaq AI\ai_service.py", line 544, in get_ai_response_with_intent
+    response = requests.post(
+        url,
+    ...<2 lines>...
+        timeout=60,
+    )
+  File "C:\Users\User\AppData\Local\Programs\Python\Python314\Lib\unittest\mock.py", line 1176, in __call__
+    return self._mock_call(*args, **kwargs)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Users\User\AppData\Local\Programs\Python\Python314\Lib\unittest\mock.py", line 1180, in _mock_call
+    return self._execute_mock_call(*args, **kwargs)
+           ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Users\User\AppData\Local\Programs\Python\Python314\Lib\unittest\mock.py", line 1241, in _execute_mock_call
+    raise effect
+requests.exceptions.Timeout: Read timeout
+2026-09-04 22:18:55 - ai_service - ERROR - ВСЕ ПОПЫТКИ ИСЧЕРПАНЫ (2): запрос к OpenAI API не удался. Бизнес ID: 1 | Последняя ошибка: Read timeout
+NoneType: None
+2026-09-04 22:18:55 - error_notifier - ERROR - Не удалось отправить алерт об ошибке в канал -4433809117: Read timeout
+2026-09-04 22:18:55 - error_notifier - ERROR - Не удалось отправить алерт об ошибке в канал -1004433809117: Read timeout
+2026-09-04 22:18:55 - sanaq_ai - WARNING - Ошибка валидации входящего JSON [HTTP 422] (POST /orders): 1 validation error:
+  {'type': 'value_error', 'loc': ('body', 'items', 0, 'quantity'), 'msg': 'Value error, Количество (quantity) должно быть больше нуля, получено: 0', 'input': 0, 'ctx': {'error': ValueError('Количество (quantity) должно быть больше нуля, получено: 0')}}
+
+  File "C:\Users\User\Desktop\Sanaq AI\main.py", line 434, in api_create_order
+    POST /orders
+2026-09-04 22:18:55 - httpx2 - INFO - HTTP Request: POST http://testserver/orders "HTTP/1.1 422 Unprocessable Content"
+2026-09-04 22:18:55 - sanaq_ai - WARNING - Ошибка валидации входящего JSON [HTTP 422] (POST /chat): 1 validation error:
+  {'type': 'json_invalid', 'loc': ('body', 36), 'msg': 'JSON decode error', 'input': {}, 'ctx': {'error': 'Expecting property name enclosed in double quotes'}}
+
+  File "C:\Users\User\Desktop\Sanaq AI\main.py", line 353, in chat_with_ai
+    POST /chat
+2026-09-04 22:18:55 - httpx2 - INFO - HTTP Request: POST http://testserver/chat "HTTP/1.1 422 Unprocessable Content"
+2026-09-04 22:20:46 - ai_service - INFO - Успешно извлечен артикул со скриншота: Арт. 12
+2026-09-04 22:20:46 - ai_service - INFO - Артикул на скриншоте не обнаружен.
+2026-09-04 22:20:46 - ai_service - INFO - Голосовое сообщение успешно расшифровано: 'Здравствуйте, хочу заказать роз 15 штук'
+2026-09-04 22:20:46 - ai_service - INFO - Язык сообщения: ru | Модель: gpt-5.6-luna | Бизнес/Shop ID: 99
+2026-09-04 22:20:46 - ai_service - INFO - Успешный ответ от OpenAI (длина: 67 символов)
+2026-09-04 22:20:46 - httpx2 - INFO - HTTP Request: POST http://testserver/webhook/99 "HTTP/1.1 200 OK"
+2026-09-04 22:21:11 - ai_service - INFO - Язык сообщения: kk | Модель: gpt-5.6-luna | Бизнес/Shop ID: 1
+2026-09-04 22:21:11 - ai_service - WARNING - [Попытка 1/2] Ошибка соединения с OpenAI API (https://api.openai.com/v1/chat/completions). Бизнес ID: 1 | Ошибка: Connection refused
+Traceback (most recent call last):
+  File "C:\Users\User\Desktop\Sanaq AI\ai_service.py", line 544, in get_ai_response_with_intent
+    response = requests.post(
+        url,
+    ...<2 lines>...
+        timeout=60,
+    )
+  File "C:\Users\User\AppData\Local\Programs\Python\Python314\Lib\unittest\mock.py", line 1176, in __call__
+    return self._mock_call(*args, **kwargs)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Users\User\AppData\Local\Programs\Python\Python314\Lib\unittest\mock.py", line 1180, in _mock_call
+    return self._execute_mock_call(*args, **kwargs)
+           ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Users\User\AppData\Local\Programs\Python\Python314\Lib\unittest\mock.py", line 1241, in _execute_mock_call
+    raise effect
+requests.exceptions.ConnectionError: Connection refused
+2026-09-04 22:21:12 - ai_service - WARNING - [Попытка 2/2] Ошибка соединения с OpenAI API (https://api.openai.com/v1/chat/completions). Бизнес ID: 1 | Ошибка: Connection refused
+Traceback (most recent call last):
+  File "C:\Users\User\Desktop\Sanaq AI\ai_service.py", line 544, in get_ai_response_with_intent
+    response = requests.post(
+        url,
+    ...<2 lines>...
+        timeout=60,
+    )
+  File "C:\Users\User\AppData\Local\Programs\Python\Python314\Lib\unittest\mock.py", line 1176, in __call__
+    return self._mock_call(*args, **kwargs)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Users\User\AppData\Local\Programs\Python\Python314\Lib\unittest\mock.py", line 1180, in _mock_call
+    return self._execute_mock_call(*args, **kwargs)
+           ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Users\User\AppData\Local\Programs\Python\Python314\Lib\unittest\mock.py", line 1241, in _execute_mock_call
+    raise effect
+  File "C:\Users\User\Desktop\Sanaq AI\ai_service.py", line 544, in get_ai_response_with_intent
+    response = requests.post(
+        url,
+    ...<2 lines>...
+        timeout=60,
+    )
+  File "C:\Users\User\AppData\Local\Programs\Python\Python314\Lib\unittest\mock.py", line 1176, in __call__
+    return self._mock_call(*args, **kwargs)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Users\User\AppData\Local\Programs\Python\Python314\Lib\unittest\mock.py", line 1180, in _mock_call
+    return self._execute_mock_call(*args, **kwargs)
+           ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Users\User\AppData\Local\Programs\Python\Python314\Lib\unittest\mock.py", line 1241, in _execute_mock_call
+    raise effect
+requests.exceptions.ConnectionError: Connection refused
+2026-09-04 22:21:12 - ai_service - ERROR - ВСЕ ПОПЫТКИ ИСЧЕРПАНЫ (2): запрос к OpenAI API не удался. Бизнес ID: 1 | Последняя ошибка: Connection refused
+NoneType: None
+2026-09-04 22:21:12 - error_notifier - ERROR - Не удалось отправить алерт об ошибке в канал -4433809117: Connection refused
+2026-09-04 22:21:12 - error_notifier - ERROR - Не удалось отправить алерт об ошибке в канал -1004433809117: Connection refused
+2026-09-04 22:21:12 - ai_service - INFO - Язык сообщения: ru | Модель: gpt-5.6-luna | Бизнес/Shop ID: 1
+2026-09-04 22:21:12 - ai_service - WARNING - [Попытка 1/2] RateLimitError (HTTP 429) от API. Retry-After: 1 | URL: https://api.openai.com/v1/chat/completions
+2026-09-04 22:21:13 - ai_service - WARNING - [Попытка 2/2] RateLimitError (HTTP 429) от API. Retry-After: 1 | URL: https://api.openai.com/v1/chat/completions
+2026-09-04 22:21:13 - ai_service - ERROR - RATE LIMIT ИСЧЕРПАН: OpenAI API вернул 429 после 2 попыток. Бизнес ID: 1 | Модель: gpt-5.6-luna | URL: https://api.openai.com/v1/chat/completions
+2026-09-04 22:21:13 - error_notifier - ERROR - Ошибка Telegram API при отправке алерта (429): <MagicMock name='post().text' id='168511200'>
+2026-09-04 22:21:13 - error_notifier - ERROR - Ошибка Telegram API при отправке алерта (429): <MagicMock name='post().text' id='168511200'>
+2026-09-04 22:21:14 - ai_service - INFO - Язык сообщения: ru | Модель: gpt-5.6-luna | Бизнес/Shop ID: 1
+2026-09-04 22:21:14 - ai_service - WARNING - [Попытка 1/2] Таймаут запроса к OpenAI API (https://api.openai.com/v1/chat/completions). Бизнес ID: 1
+Traceback (most recent call last):
+  File "C:\Users\User\Desktop\Sanaq AI\ai_service.py", line 544, in get_ai_response_with_intent
+    response = requests.post(
+        url,
+    ...<2 lines>...
+        timeout=60,
+    )
+  File "C:\Users\User\AppData\Local\Programs\Python\Python314\Lib\unittest\mock.py", line 1176, in __call__
+    return self._mock_call(*args, **kwargs)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Users\User\AppData\Local\Programs\Python\Python314\Lib\unittest\mock.py", line 1180, in _mock_call
+    return self._execute_mock_call(*args, **kwargs)
+           ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Users\User\AppData\Local\Programs\Python\Python314\Lib\unittest\mock.py", line 1241, in _execute_mock_call
+    raise effect
+requests.exceptions.Timeout: Read timeout
+2026-09-04 22:21:15 - ai_service - WARNING - [Попытка 2/2] Таймаут запроса к OpenAI API (https://api.openai.com/v1/chat/completions). Бизнес ID: 1
+Traceback (most recent call last):
+  File "C:\Users\User\Desktop\Sanaq AI\ai_service.py", line 544, in get_ai_response_with_intent
+    response = requests.post(
+        url,
+    ...<2 lines>...
+        timeout=60,
+    )
+  File "C:\Users\User\AppData\Local\Programs\Python\Python314\Lib\unittest\mock.py", line 1176, in __call__
+    return self._mock_call(*args, **kwargs)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Users\User\AppData\Local\Programs\Python\Python314\Lib\unittest\mock.py", line 1180, in _mock_call
+    return self._execute_mock_call(*args, **kwargs)
+           ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Users\User\AppData\Local\Programs\Python\Python314\Lib\unittest\mock.py", line 1241, in _execute_mock_call
+    raise effect
+  File "C:\Users\User\Desktop\Sanaq AI\ai_service.py", line 544, in get_ai_response_with_intent
+    response = requests.post(
+        url,
+    ...<2 lines>...
+        timeout=60,
+    )
+  File "C:\Users\User\AppData\Local\Programs\Python\Python314\Lib\unittest\mock.py", line 1176, in __call__
+    return self._mock_call(*args, **kwargs)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Users\User\AppData\Local\Programs\Python\Python314\Lib\unittest\mock.py", line 1180, in _mock_call
+    return self._execute_mock_call(*args, **kwargs)
+           ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Users\User\AppData\Local\Programs\Python\Python314\Lib\unittest\mock.py", line 1241, in _execute_mock_call
+    raise effect
+requests.exceptions.Timeout: Read timeout
+2026-09-04 22:21:15 - ai_service - ERROR - ВСЕ ПОПЫТКИ ИСЧЕРПАНЫ (2): запрос к OpenAI API не удался. Бизнес ID: 1 | Последняя ошибка: Read timeout
+NoneType: None
+2026-09-04 22:21:15 - error_notifier - ERROR - Не удалось отправить алерт об ошибке в канал -4433809117: Read timeout
+2026-09-04 22:21:15 - error_notifier - ERROR - Не удалось отправить алерт об ошибке в канал -1004433809117: Read timeout
+2026-09-04 22:21:15 - sanaq_ai - WARNING - Ошибка валидации входящего JSON [HTTP 422] (POST /orders): 1 validation error:
+  {'type': 'value_error', 'loc': ('body', 'items', 0, 'quantity'), 'msg': 'Value error, Количество (quantity) должно быть больше нуля, получено: 0', 'input': 0, 'ctx': {'error': ValueError('Количество (quantity) должно быть больше нуля, получено: 0')}}
+
+  File "C:\Users\User\Desktop\Sanaq AI\main.py", line 434, in api_create_order
+    POST /orders
+2026-09-04 22:21:15 - httpx2 - INFO - HTTP Request: POST http://testserver/orders "HTTP/1.1 422 Unprocessable Content"
+2026-09-04 22:21:15 - sanaq_ai - WARNING - Ошибка валидации входящего JSON [HTTP 422] (POST /chat): 1 validation error:
+  {'type': 'json_invalid', 'loc': ('body', 36), 'msg': 'JSON decode error', 'input': {}, 'ctx': {'error': 'Expecting property name enclosed in double quotes'}}
+
+  File "C:\Users\User\Desktop\Sanaq AI\main.py", line 353, in chat_with_ai
+    POST /chat
+2026-09-04 22:21:15 - httpx2 - INFO - HTTP Request: POST http://testserver/chat "HTTP/1.1 422 Unprocessable Content"

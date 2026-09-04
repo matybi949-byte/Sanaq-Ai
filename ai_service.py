@@ -60,7 +60,7 @@ except ImportError:
 
 API_BASE_URL: str = os.getenv("OPENAI_API_BASE", "https://api.openai.com/v1")
 API_KEY: str = os.getenv("OPENAI_API_KEY", "")
-DEFAULT_MODEL: str = os.getenv("AI_MODEL", "gpt-4o-mini")
+DEFAULT_MODEL: str = os.getenv("AI_MODEL", "gpt-5.6-luna")
 
 MAX_HISTORY_MESSAGES: int = int(os.getenv("MAX_HISTORY_MESSAGES", "20"))
 MAX_RESPONSE_TOKENS: int = int(os.getenv("MAX_RESPONSE_TOKENS", "1024"))
@@ -760,7 +760,7 @@ def analyze_image_for_article(
     Args:
         image_url: URL изображения или скриншота.
         api_key: API-ключ OpenAI (если не указан, берется из .env).
-        model: Модель ИИ с поддержкой распознавания изображений (по умолчанию gpt-4o-mini).
+        model: Модель ИИ с поддержкой распознавания изображений (по умолчанию gpt-5.6-luna).
 
     Returns:
         Optional[str]: Извлеченный артикул/номер товара или None, если не найден.

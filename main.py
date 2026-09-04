@@ -17,7 +17,7 @@ from datetime import datetime, date, timezone
 from typing import Optional
 
 from json import JSONDecodeError
-from fastapi import FastAPI, Depends, HTTPException, Request, status
+from fastapi import FastAPI, Depends, HTTPException, Request, status, BackgroundTasks
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
@@ -32,6 +32,7 @@ from models import (
     Business,
     Product,
     Client,
+    Order,
     ChatMessage,
     WebhookPayloadValidation,
     OrderDataValidation,
@@ -52,6 +53,11 @@ from omnichannel import router as omni_router
 from messengers_router import router as messengers_router, register_telegram_webhook
 from analytics import get_daily_analytics, format_daily_report, send_daily_report_to_admin
 from openai_service import openai_client
+from error_notifier import send_critical_error, async_send_critical_error, TelegramErrorLoggingHandler
+from dashboard import router as dashboard_router
+from db_backup import send_db_backup_to_telegram, create_db_backup
+from heartbeat import async_send_uptime_heartbeat, send_uptime_heartbeat
+from kaspi_payment import generate_kaspi_pay_link, process_kaspi_webhook_payment
 
 # Импортируем модели, чтобы SQLAlchemy знал обо всех таблицах
 import models  # noqa: F401
@@ -76,11 +82,16 @@ console_handler = logging.StreamHandler(sys.stdout)
 console_handler.setFormatter(log_formatter)
 console_handler.setLevel(logging.DEBUG if settings.DEBUG else logging.INFO)
 
+# Хэндлер для отправки критических ошибок в Telegram-канал мониторинга
+telegram_error_handler = TelegramErrorLoggingHandler(level=logging.ERROR)
+telegram_error_handler.setFormatter(log_formatter)
+
 # Конфигурация корневого логгера
 root_logger = logging.getLogger()
 root_logger.setLevel(logging.INFO)
 root_logger.addHandler(file_handler)
 root_logger.addHandler(console_handler)
+root_logger.addHandler(telegram_error_handler)
 
 logger = logging.getLogger("sanaq_ai")
 
@@ -245,6 +256,11 @@ async def global_exception_handler(request: Request, exc: Exception):
         exc,
         exc_info=True,
     )
+    # Автоматическая отправка текста ошибки в Telegram-канал мониторинга
+    await async_send_critical_error(
+        error=exc,
+        context=f"FastAPI [{request.method} {request.url.path}]",
+    )
     return JSONResponse(
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         content={
@@ -262,7 +278,56 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# ──────────────────────────────────────────────
+# Эндпоинты Мониторинга, Бэкапов и Kaspi Pay
+# ──────────────────────────────────────────────
+
+@app.post("/admin/backup", tags=["System"])
+def api_trigger_db_backup(background_tasks: BackgroundTasks):
+    """Принудительно создает бэкап БД и отправляет его в Telegram в фоновом режиме."""
+    background_tasks.add_task(send_db_backup_to_telegram)
+    return {"status": "success", "message": "Бэкап базы данных запущен и будет отправлен в Telegram."}
+
+
+@app.post("/health/heartbeat", tags=["System"])
+async def api_trigger_uptime_heartbeat(background_tasks: BackgroundTasks):
+    """Отправляет актуальный статус Uptime Heartbeat в канал мониторинга."""
+    background_tasks.add_task(async_send_uptime_heartbeat)
+    return {"status": "success", "message": "Отправка Heartbeat статуса запущена."}
+
+
+@app.get("/payments/kaspi/{order_id}", tags=["Payments"])
+def api_get_kaspi_pay_details(order_id: int, db: Session = Depends(get_db)):
+    """Получает данные Kaspi QR / ссылки на оплату для заказа."""
+    order = db.query(Order).filter(Order.id == order_id).first()
+    if not order:
+        raise HTTPException(status_code=404, detail=f"Заказ #{order_id} не найден")
+    return generate_kaspi_pay_link(order_id=order.id, amount=order.total_price, shop_id=order.shop_id or 1)
+
+
+class KaspiWebhookPayload(BaseModel):
+    txn_id: str = Field(..., description="ID транзакции Kaspi")
+    order_id: int = Field(..., description="ID заказа")
+    amount: float = Field(..., description="Сумма оплаты")
+
+
+@app.post("/webhook/kaspi", tags=["Payments"])
+@app.post("/payments/kaspi/webhook", tags=["Payments"])
+def api_kaspi_pay_webhook(payload: KaspiWebhookPayload, db: Session = Depends(get_db)):
+    """Принимает автоматически уведомления об успешной оплате от Kaspi Pay API."""
+    success, msg = process_kaspi_webhook_payment(
+        db=db,
+        txn_id=payload.txn_id,
+        order_id=payload.order_id,
+        amount=payload.amount,
+    )
+    if not success:
+        raise HTTPException(status_code=400, detail=msg)
+    return {"status": "success", "message": msg}
+
+
 # Подключаем роутеры (конкретные пути messengers_router должны быть раньше параметризованного webhook_router)
+app.include_router(dashboard_router)
 app.include_router(messengers_router)
 app.include_router(webhook_router)
 app.include_router(admin_router)
@@ -404,19 +469,20 @@ def api_daily_analytics(
 @app.post("/analytics/{business_id}/send_report", tags=["Analytics"])
 def api_send_daily_report(
     business_id: int,
+    background_tasks: BackgroundTasks,
     target_date: Optional[str] = None,
 ):
-    """Отправляет дневной отчёт в Telegram-админ-бот."""
+    """Отправляет дневной отчёт в Telegram-админ-бот в фоновом режиме."""
     dt = None
     if target_date:
         try:
             dt = datetime.strptime(target_date, "%Y-%m-%d").date()
         except ValueError:
             raise HTTPException(status_code=400, detail="Формат даты: YYYY-MM-DD")
-    success = send_daily_report_to_admin(business_id, dt)
+    background_tasks.add_task(send_daily_report_to_admin, business_id, dt)
     return {
-        "status": "success" if success else "error",
-        "message": "Отчёт отправлен в Telegram" if success else "Не удалось отправить отчёт (проверьте TELEGRAM_BOT_TOKEN и ADMIN_ID)",
+        "status": "success",
+        "message": "Отправка отчета запущена в фоновом режиме (BackgroundTasks).",
     }
 
 
